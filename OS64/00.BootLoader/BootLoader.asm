@@ -188,6 +188,14 @@ READEND:
 
 	jmp .MESSAGELOOP
 .MESSAGEEND:
+	pop dx
+	pop cx
+	pop ax
+	pop di
+	pop si
+	pop es
+	pop bp
+	ret
 
 
 ;====================================================
