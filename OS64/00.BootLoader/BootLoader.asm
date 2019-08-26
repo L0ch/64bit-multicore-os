@@ -96,7 +96,7 @@ READDATA:
 	;====================================================
 	;  CALCULATE ADDRESS TO COPY & TRACK,HEAD,SECCTOR
 	;====================================================
-	add si, 0x0020	; read 512(0x200), so convert to segment register value
+	add si, 0x0020	; read 512byte complete, so convert to segment register value
 	mov es, si		; increase 512
 
 	; SECTORNUMBER++
@@ -133,47 +133,46 @@ READEND:
 	jmp 0x1000:0x0000
 
 
-	;====================================================
-	;              FUNCTION CODE SECTION
-	;====================================================
-	; EXCEPTION HANDLING FUNCTION
-	HANDLEDISKERROR:
-		push DISKERRORMESSAGE	; push error message
-		push 1					; Y
-		push 20					; X
-		call PRINTMESSAGE
+;====================================================
+;              FUNCTION CODE SECTION
+;====================================================
+; EXCEPTION HANDLING FUNCTION
+HANDLEDISKERROR:
+	push DISKERRORMESSAGE	; push error message
+	push 1					; Y
+	push 20					; X
+	call PRINTMESSAGE
 
-		jmp $					; loooooooooop
+	jmp $					; loooooooooop
 
-	; PRINT MESSAGE FUNCTION
-	; parameter : x coordinate, y coordinate, string
-	PRINTMESSAGE:
-		push bp
-		mov sp, bp	; function prologue
+; PRINT MESSAGE FUNCTION
+; parameter : x coordinate, y coordinate, string
+PRINTMESSAGE:
+	push bp
+	mov bp, sp	; function prologue
 
+	push es		; push ES ~ DX register
+	push si		; temp register in function, restore in last part of function
+	push di
+	push ax
+	push cx
+	push dx
 
-		push es		; push ES ~ DX register
-		push si		; temp register in function, restore in last part of function
-		push di
-		push ax
-		push cx
-		push dx
+	mov ax, 0xB800	;video memory address (0xB8000)
+	mov es, ax
 
-		mov ax, 0xB800	;video memory address (0xB8000)
-		mov es, ax
+	; calculate video memory addres with x, y coordinate
+	mov ax, word [ bp + 6 ]	; set AX to param 2 (Y)
+	mov si, 160				; one line = 160 byte
+	mul si
+	mov di, ax				; ax*si -> di
 
-		; calculate video memory addres with x, y coordinate
-		mov ax, word [ bp + 6 ]	; set AX to param 2 (Y)
-		mov si, 160				; one line = 160 byte
-		mul si
-		mov di, ax				; ax*si -> di
+	mov ax, word [ bp + 4 ]	; set AX to param 1 (X)
+	mov si, 2				; 1 char = char+property(2byte)
+	mul si
+	add di, ax
 
-		mov ax, word [ bp + 4 ]	; set AX to param 1 (X)
-		mov si, 2				; 1 char = char+property(2byte)
-		mul si
-		add di, ax
-
-		mov si, word [ bp + 8 ]	; param 3 (MESSAGE)
+	mov si, word [ bp + 8 ]	; param 3 (MESSAGE)
 
 .MESSAGELOOP:
 	mov cl, byte [ si ] ; CX(CH+CL)
@@ -197,7 +196,6 @@ READEND:
 	pop bp
 	ret
 
-
 ;====================================================
 ;             		DATA SECTION
 ;====================================================
@@ -210,7 +208,7 @@ LOADINGCOMPLETEMESSAGE:	db	'Complete',0
 
 SECTORNUMBER:			db	0x02
 HEADNUMBER:				db	0x00
-TRACKNUMBER:				db	0x00
+TRACKNUMBER:			db	0x00
 
 
 times 510 - ( $-$$ )	db	0x00
