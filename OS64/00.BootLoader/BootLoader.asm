@@ -5,7 +5,7 @@ SECTION .text
 
 jmp 0x07C0:START	;CS=0x07C0, goto START
 
-TOTALSECTORCOUNT: dw 1024	;OS IMAGE SIZE (exept BootLoader), MAX 1152 SECTOR(0x90000byte)
+TOTALSECTORCOUNT: dw 1	;OS IMAGE SIZE (exept BootLoader), MAX 1152 SECTOR(0x90000byte)
 
 ;====================================================
 ;                    CODE SECTION
@@ -103,7 +103,10 @@ READDATA:
 	mov al, byte [ SECTORNUMBER ]
 	add al, 0x01
 	mov byte [ SECTORNUMBER ], al
-	cmp al, 19						; if NOT last sector(18), continue to read sector
+	cmp al, 37					; if NOT last sector(18), continue to read sector
+								; in latest version qemu, Floppy Disk 1.44MB FD -> 2.88MD FD. so 18 sector -> 36 sector
+
+
 	jl READDATA
 
 	; HEADNUMBER TOGGLE (0->1, 1->0), set SECTORNUMER 1

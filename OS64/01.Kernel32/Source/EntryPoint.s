@@ -7,7 +7,7 @@ SECTION .text
 ;                    CODE SECTION
 ;====================================================
 START:
-	mov ax, 0x1000	;conver PROTECTEDMODE entry point start address(0x10000) to segment register
+	mov ax, 0x1000	;convert PROTECTEDMODE entry point start address(0x10000) to segment register
 	mov ds, ax
 	mov es, ax
 
@@ -22,7 +22,7 @@ START:
 	mov eax, 0x4000003B	; PG=0, CD=1, NW=0, AM=0, WP=0, NE=1, TS=1, EM=0, MP=1, PE=1
 	mov cr0, eax		; set CR0 control register to flags
 
-	;
+	; code segment GDT offset(0x8) + OS image base 0x10000 + PROTECTEDMODE offset
 	jmp dword 0x08: ( PROTECTEDMODE - $$ + 0x10000 )
 
 ;====================================================
@@ -30,7 +30,7 @@ START:
 ;====================================================
 [BITS 32]
 PROTECTEDMODE:
-	mov ax, 0x10
+	mov ax, 0x10	; set ax to data segment discriptor
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -104,10 +104,11 @@ align 8, db 0
 dw 0x0000
 
 GDTR:
-	dw GDTEND - GDT - 1
-	dd ( GDT - $$ + 0x10000 )
+	dw GDTEND - GDT - 1			; GDT table total size
+	dd ( GDT - $$ + 0x10000 )	; GDT table start address
 
 GDT:
+	; Null descriptor (reserved descriptor)
 	NULLDescriptor:
 		dw 0x0000
 		dw 0x0000
@@ -116,6 +117,7 @@ GDT:
 		db 0x00
 		db 0x00
 
+	; code segment descriptor
 	CODEDESCRIPTOR:
 		dw 0xFFFF
 		dw 0x0000
@@ -124,6 +126,7 @@ GDT:
 		db 0xCF
 		db 0x00
 
+	; data segment descriptor
 	DATADESCRIPTOR:
 		dw 0xFFFF
 		dw 0x0000
