@@ -28,7 +28,7 @@ Disk.img: 00.BootLoader/BootLoader.bin 01.Kernel32/Kernel32.bin
 	@echo
 	
 	./ImageMaker $^
-	
+	chmod 777 Disk.img
 	@echo
 	@echo ===== All Build Complete =====
 	@echo

@@ -24,12 +24,14 @@ int main(int argc, char* argv[]){
 		fprintf( stderr, "[ERROR] ImageMaker BootLoader.bin Kernel32.bin\n" );
 		exit( -1 );
 	}
-
+	// Create Disk.img
 	if( ( iTargetFd = open( "Disk.img", O_RDWR | O_CREAT | O_TRUNC | S_IREAD | S_IWRITE )) == -1 ){
 		fprintf(stderr, "[ERROR] Disk.img open fail.\n");
 		exit(-1);
 	}
-
+	//-------------------------------------------------
+	// Copy BootLoader to Disk.img
+	//-------------------------------------------------
 	printf("[INFO] Copy boot loader to image file\n");
 	if((iSourceFd = open( argv[1], O_RDONLY)) == -1 ){
 		fprintf( stderr, "[ERROR] %s open fail\n", argv[1]);
@@ -39,10 +41,13 @@ int main(int argc, char* argv[]){
 	iSourceSize = CopyFile(iSourceFd, iTargetFd);
 	close(iSourceFd);
 
+	//To adjust size of Sector to 512, fill with 0x00
 	iBootLoaderSize = AdjustInSectorSize(iTargetFd, iSourceSize);
-	printf("[INFO] %s size = [%d] and sector count = [d]\n", argv[1], iSourceSize, iBootLoaderSize );
+	printf("[INFO] %s size = [%d] and sector count = [%d]\n", argv[1], iSourceSize, iBootLoaderSize );
 
-
+	//-------------------------------------------------
+	// Copy Kernel32 to Disk.img
+	//-------------------------------------------------
 	printf("[INFO] Copy protected mode kernel to image file\n");
 
 	if((iSourceFd = open( argv[2], O_RDONLY)) == -1 ){
@@ -53,10 +58,15 @@ int main(int argc, char* argv[]){
 	iSourceSize = CopyFile(iSourceFd, iTargetFd);
 	close(iSourceFd);
 
+	// To adjust size of Sector to 512, fill with 0x00
 	iKernel32SectorCount = AdjustInSectorSize(iTargetFd, iSourceSize);
-	printf("[INFO] %s size = [%d] and sector count = [d]\n", argv[2], iSourceSize, iKernel32SectorCount );
+	printf("[INFO] %s size = [%d] and sector count = [%d]\n", argv[2], iSourceSize, iKernel32SectorCount );
 
+	//-------------------------------------------------
+	// Update kernel information to Disk.img
+	//-------------------------------------------------
 	printf("[INFO] Start to write kernel information\n");
+	// Update kernel information since 5th byte of Boot Sector
 	WriteKernelInformation(iTargetFd, iKernel32SectorCount);
 	printf("[INFO] Image file create complete\n");
 
@@ -66,6 +76,7 @@ int main(int argc, char* argv[]){
 
 }
 
+//To adjust size of Sector to 512, fill with 0x00
 int AdjustInSectorSize(int iFd, int iSourceSize){
 	int i;
 	int iAdjustSizeToSector;
@@ -89,11 +100,12 @@ int AdjustInSectorSize(int iFd, int iSourceSize){
 	iSectorCount = (iSourceSize + iAdjustSizeToSector) / BYTESOFSECTOR;
 	return iSectorCount;
 }
-
+//Insert kernel information to BootLoader
 void WriteKernelInformation(int iTargetFd, int iKernelSectorCount){
 	unsigned short usData;
 	long lPosition;
 
+	// 5th byte of start of file = TOTALSECTORCOUNT
 	lPosition = lseek(iTargetFd, 5, SEEK_SET);
 	if(lPosition == -1){
 		fprintf(stderr, "lseek fail. Return value = %d, errno=%d, %d\n", lPosition, errno, SEEK_SET);

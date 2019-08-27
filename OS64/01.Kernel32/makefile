@@ -1,3 +1,6 @@
+##############################################
+#          SET BUILD ENVIRONMENT 
+##############################################
 NASM32 = nasm
 GCC32 = x86_64-pc-linux-gcc -c -m32 -ffreestanding
 LD32 = x86_64-pc-linux-ld -melf_i386 -T ../elf_i386.x -nostdlib -e Main -Ttext 0x10200
@@ -7,6 +10,9 @@ OBJECTDIRECTORY = Temp
 SOURCEDIRECTORY = Source
 
 
+##############################################
+#             SET BUILD ITEM 
+##############################################
 all: prepare Kernel32.bin
 
 prepare:
@@ -32,15 +38,20 @@ Kernel32.bin: $(OBJECTDIRECTORY)/EntryPoint.bin $(OBJECTDIRECTORY)/Kernel32.elf.
 clean:
 	rm -f *.bin
 	rm -f $(OBJECTDIRECTORY)/*.*
-	
+
+#############################################
+#   CALL BY MAKE , BASED TEMP DIRECTORY
+#############################################
 CENTRYPOINTOBJECTFILE = Main.o
 CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c)
 ASSEMBLYSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.asm)
 COBJECTFILES = $(subst Main.o, , $(notdir $(patsubst %.c, %.o, $(CSOURCEFILES))))
 ASSEMBLYOBJECTFILES = $(notdir $(patsubst %.asm, %o, $(ASSEMBLYSOURCEFILES)))
 
+# define rule .c to .o
 %.o: ../$(SOURCEDIRECTORY)/%.c
 		$(GCC32) -c $<
+# define rule .asm to .o
 %.o: ../$(SOURCEDIRECTORY)/%.asm
 		$(NASM32) -f elf32 -o $@ $<
 		
