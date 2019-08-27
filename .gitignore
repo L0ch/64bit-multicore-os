@@ -3,3 +3,6 @@
 .project
 *.bin
 *.img
+ImageMaker
+.settings
+*.elf
