@@ -2,13 +2,31 @@
 
 void kPrintString(int iX, int iY, const char* pcString);
 BOOL kInitializeKernel64Area(void);
+BOOL kIsMemoryEnough(void);
 void Main(void){
 	DWORD i;
 
 
 	kPrintString(0, 3, "Kernel32 Started");
-	kInitializeKernel64Area();
-	kPrintString(0,4, "IA-32e Kernel Area Initialization Complete");
+
+	kPrintString(0, 4, "Minimum Memory Size Check..............[    ]");
+	if(kIsMemoryEnough() == FALSE){
+		kPrintString(40, 4, "Fail");
+		kPrintString(0, 5, "Not Enough Memory. System Requires Over 64Mbyte Memory" );
+		while(1);
+	}
+	else{
+		kPrintString(40, 4, "Done");
+	}
+	kPrintString(0,5, "IA-32e Kernel Area Initialization......[    ]");
+	if(kInitializeKernel64Area()==FALSE){
+		kPrintString(40, 5, "Fail");
+		kPrintString(0, 6, "A-32e Kernel Area Initialization Fail");
+		while(1);
+	}
+	else{
+		kPrintString(40, 5, "Done");
+	}
 
 	while(1);
 }
@@ -43,4 +61,20 @@ BOOL kInitializeKernel64Area(void){
 	return TRUE;
 }
 
+BOOL kIsMemoryEnough(void){
+	DWORD* pdwCurrentAddress;
+
+	pdwCurrentAddress = (DWORD*) 0x100000;
+
+	while((DWORD) pdwCurrentAddress < 0x4000000){
+		*pdwCurrentAddress = 0xdeadbeef;
+
+		if (*pdwCurrentAddress != 0xdeadbeef){
+			return FALSE;
+		}
+
+		pdwCurrentAddress += 0x100000;
+	}
+	return TRUE;
+}
 
