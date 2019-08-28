@@ -11,6 +11,23 @@ START:
 	mov ds, ax
 	mov es, ax
 
+;====================================================
+;                 ACTIVATE A20 GATE
+;====================================================
+	;Activate A20 gate using BIOS service
+	mov ax, 0x2401	; Set activate A20 gate service
+	int 0x15		; Call BIOS interrupt service
+
+	jc .A20GATEERROR
+	jmp .A20GATESUCCESS
+
+.A20GATEERROR:		; If fail, using system control port
+	in al, 0x92
+	or al, 0x02		; Set bit 1(A20 gate bit) 1
+	and al, 0xFE
+	out 0x92, al
+
+.A20GATESUCCESS:
 	cli 			; NO interrupt
 	lgdt [ GDTR ] 	; set processor to GDTR data structure, load GDT table
 
