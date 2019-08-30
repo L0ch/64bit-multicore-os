@@ -1,4 +1,5 @@
 #include "Types.h"
+#include "Page.h"
 
 void kPrintString(int iX, int iY, const char* pcString);
 BOOL kInitializeKernel64Area(void);
@@ -20,7 +21,7 @@ void Main(void){
 	else{
 		kPrintString(40, 4, "Done");
 	}
-	kPrintString(0,5, "IA-32e Kernel Area Initialization......[    ]");
+	kPrintString(0,5, "IA-32e Kernel Area Initialize..........[    ]");
 	if(kInitializeKernel64Area()==FALSE){	//If can't access Kernel Area
 		kPrintString(40, 5, "Fail");
 		kPrintString(0, 6, "A-32e Kernel Area Initialization Fail");
@@ -29,6 +30,10 @@ void Main(void){
 	else{
 		kPrintString(40, 5, "Done");
 	}
+
+	kPrintString(0, 6, "IA-32e Page Tables Initialize..........[    ]");
+	kInitializePageTables();
+	kPrintString( 40, 6, "Done");
 
 	while(1);
 }
