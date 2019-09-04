@@ -40,14 +40,14 @@ START:
 	mov cr0, eax		; set CR0 control register to flags
 
 	; code segment GDT offset(0x8) + OS image base 0x10000 + PROTECTEDMODE offset
-	jmp dword 0x08: ( PROTECTEDMODE - $$ + 0x10000 )
+	jmp dword 0x18: ( PROTECTEDMODE - $$ + 0x10000 )
 
 ;====================================================
 ;                 ENTER PROTECED MODE
 ;====================================================
 [BITS 32]
 PROTECTEDMODE:
-	mov ax, 0x10	; set ax to data segment discriptor
+	mov ax, 0x20	; set ax to data segment discriptor
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -63,7 +63,7 @@ PROTECTEDMODE:
 	call PRINTMESSAGE
 	add esp, 12
 
-	jmp dword 0x08: 0x10200 ; C language kernel
+	jmp dword 0x18: 0x10200 ; C language kernel
 
 
 
@@ -134,23 +134,44 @@ GDT:
 		db 0x00
 		db 0x00
 
-	; code segment descriptor
-	CODEDESCRIPTOR:
-		dw 0xFFFF
-		dw 0x0000
-		db 0x00
-		db 0x9A
-		db 0xCF
-		db 0x00
+	; Code segment descriptor for IA-32e
+	IA_32eCODEDESCRIPTOR:
+		dw 0xFFFF		; Limit [15:0]
+		dw 0x0000		; Base [15:0]
+		db 0x00			; Base [23:16]
+		db 0x9A			; P=1, DPL=0, Code Segment, Execute/Read
+		db 0xAF			; G=1, D=0, L=1, Limit[19:16]
+		db 0x00			; Base [31:24]
 
-	; data segment descriptor
+	; Data segment descriptor for IA-32e
+	IA_32eDATADESCRIPTOR:
+		dw 0xFFFF		; Limit [15:0]
+		dw 0x0000		; Base [15:0]
+		db 0x00			; Base [23:16]
+		db 0x92			; P=1, DPL=0, Data Segment, Read/Write
+		db 0xAF			; G=1, D=0, L=1, Limit[19:16]
+		db 0x00			; Base [31:24]
+
+
+	; Code segment descriptor for protected mode
+	CODEDESCRIPTOR:
+		dw 0xFFFF		; Limit [15:0]
+		dw 0x0000		; Base [15:0]
+		db 0x00			; Base [23:16]
+		db 0x9A			; P=1, DPL=0, Code Segment, Execute/Read
+		db 0xCF			; G=1, D=1, L=0 Limit[19:16]
+		db 0x00			; Base [31:24]
+
+	; Data segment descriptor for protected mode
 	DATADESCRIPTOR:
-		dw 0xFFFF
-		dw 0x0000
-		db 0x00
-		db 0x92
-		db 0xCF
-		db 0x00
+		dw 0xFFFF		; Limit [15:0]
+		dw 0x0000		; Base [15:0]
+		db 0x00			; Base [23:16]
+		db 0x92			; P=1, DPL=0, Data Segment, Read/Write
+		db 0xCF			; G=1, D=1, L=0, Limit[19:16]
+		db 0x00			; Base [31:24]
+
+
 GDTEND:
 
 SWITCHSUCCESSMESSAGE: db 'Switch To Protected Mode Success', 0
