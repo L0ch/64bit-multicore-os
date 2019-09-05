@@ -5,8 +5,9 @@ SECTION .text
 
 jmp 0x07C0:START	;CS=0x07C0, goto START
 
-TOTALSECTORCOUNT: dw 0	;OS IMAGE SIZE (exept BootLoader), MAX 1152 SECTOR(0x90000byte)
-						;ImageMaker modifies this value same size as OS image size
+TOTALSECTORCOUNT: dw 0x02		;OS IMAGE SIZE (exept BootLoader), MAX 1152 SECTOR(0x90000byte)
+								;ImageMaker modifies this value same size as OS image size
+KERNEL32SECTORCOUNT: dw 0x02	;Total sector of 32bit kernel
 
 ;====================================================
 ;                    CODE SECTION
