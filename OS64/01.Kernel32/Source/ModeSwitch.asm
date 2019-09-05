@@ -1,7 +1,7 @@
 [BITS 32]
 
 global kReadCPUID		;Export for C Kernel
-
+global kSwitchAndExecute64bitKernel
 SECTION .text
 
 ;return CPUID

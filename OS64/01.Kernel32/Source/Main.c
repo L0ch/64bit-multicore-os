@@ -5,7 +5,7 @@
 void kPrintString(int iX, int iY, const char* pcString);
 BOOL kInitializeKernel64Area(void);
 BOOL kIsMemoryEnough(void);
-
+void kCopyKernel64ImageTo2MB(void);
 
 void Main(void){
 
@@ -13,7 +13,7 @@ void Main(void){
 	DWORD dwEAX, dwEBX, dwECX, dwEDX;
 	char vcVendorString[13] = {0,};
 
-	kPrintString(0, 3, "Kernel32 Started");
+	kPrintString(0, 3, "Protected Mode Kernel Start............[Done]");
 
 	kPrintString(0, 4, "Minimum Memory Size Check..............[    ]");
 	if(kIsMemoryEnough() == FALSE){		//If memory less than 64Mbyte
@@ -38,7 +38,7 @@ void Main(void){
 	kInitializePageTables();
 	kPrintString( 40, 6, "Done");
 
-	// Read processor Info
+	// Read processor info
 	kReadCPUID( 0x00, &dwEAX, &dwEBX, &dwECX, &dwEDX );
 	*( DWORD* ) vcVendorString = dwEBX;
 	*( ( DWORD* ) vcVendorString + 1 ) = dwEDX;
@@ -57,8 +57,15 @@ void Main(void){
 		kPrintString(0, 9, "This Processor Does Not Support 64bit Mode");
 		while(1);
 	}
+
+	kPrintString(0, 9, "Copy IA-32e Kernel To 2MB Address......[    ]");
+	kCopyKernel64ImageTo2MB();
+	kPrintString(40, 9, "Done");
+
 	// Switch to IA-32e Mode
-	kPrintString(0, 9, "Switch To IA-32e Mode");
+	//kPrintString(0, 9, "Switch To IA-32e Mode");
+	kSwitchAndExecute64bitKernel();	//ModeSwitch.asm
+
 	while(1);
 }
 
@@ -109,5 +116,24 @@ BOOL kIsMemoryEnough(void){
 		pdwCurrentAddress += 0x100000;
 	}
 	return TRUE;
+}
+
+void kCopyKernel64ImageTo2MB(void){
+	WORD wKernel32SectorCount, wTotalKernelSectorCount;
+	DWORD* pdwSourceAddress, *pdwDestinationAddress;
+	int i;
+
+	wTotalKernelSectorCount = *((WORD*) 0x7c05);	// Total sector count
+	wKernel32SectorCount = *((WORD*) 0x7c07);		// 32bit Kernel sector count
+
+	pdwSourceAddress = (DWORD*) (0x10000 + (wKernel32SectorCount * 512));
+	pdwDestinationAddress = (DWORD*) 0x200000;
+
+	//64bit Kernel sector count = total - 32bit
+	for(i=0; i < 512 * (wTotalKernelSectorCount - wKernel32SectorCount)/4; i++){
+		*pdwDestinationAddress = *pdwSourceAddress;
+		pdwDestinationAddress++;
+		pdwSourceAddress++;
+	}
 }
 
