@@ -72,9 +72,9 @@ typedef struct kKeyMappingEntryStruct{
 typedef struct kKeyboardManagerStruct{
 	// combined key info
 	BOOL bShiftDown;
-	BOOL bCapsLockDown;
-	BOOL bNumLockDown;
-	BOOL bScrollLockDown;
+	BOOL bCapsLockOn;
+	BOOL bNumLockOn;
+	BOOL bScrollLockOn;
 
 	// Extended key info
 	BOOL bExtendedCodeIn;
@@ -85,7 +85,7 @@ typedef struct kKeyboardManagerStruct{
 BOOL kIsOutputBufferFull(void);
 BOOL kIsInputBufferFull(void);
 BOOL kActivateKeyboard(void);
-BYTE kGetKeyboardScanCode(void)
+BYTE kGetKeyboardScanCode(void);
 BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn);
 void kEnablreA20Gate(void);
 void kReboot(void);
