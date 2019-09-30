@@ -19,6 +19,7 @@
 #define KEY_TAB			'\t'
 #define KEY_ESC			0x1B
 #define KEY_BACKSPACE	0x08
+
 #define KEY_CTRL		0x81
 #define KEY_LSHIFT		0x82
 #define KEY_RSHIFT		0x83
@@ -60,13 +61,11 @@ typedef struct kKeyMappingEntryStruct{
 
 	//ASCII NOT combined with Shift key or Caps Lock key
 	BYTE bNormalCode;
-
 	//ASCII combined with Shift, Caps Lock key
 	BYTE bCombinedCode;
 
 }KEYMAPPINGENTRY;
 
-#pragma pack (pop)
 
 // keyboard status management structure
 typedef struct kKeyboardManagerStruct{
@@ -80,6 +79,8 @@ typedef struct kKeyboardManagerStruct{
 	BOOL bExtendedCodeIn;
 	int iSkipCountForPause;
 } KEYBOARDMANAGER;
+
+#pragma pack (pop)
 
 //Function
 BOOL kIsOutputBufferFull(void);
