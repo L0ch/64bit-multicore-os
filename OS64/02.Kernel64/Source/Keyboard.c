@@ -124,7 +124,7 @@ BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn ){
 				break;
 			}
 		}
-		if(kInPortBte(0x60) == 0xFA){
+		if(kInPortByte(0x60) == 0xFA){
 			break;
 		}
 	}
@@ -188,7 +188,9 @@ void kReboot(void){
 		;
 	}
 }
-
+////////////////////////////
+// SCAN CODE TO ASCII CODE
+////////////////////////////
 
 static KEYBOARDMANAGER gs_stKeyboardManager = { 0, };
 
@@ -283,15 +285,14 @@ static KEYMAPPINGENTRY gs_vstKeyMappingTable[ KEY_MAPPINGTABLEMAXCOUNT ] ={
 	/*	85	*/	{	KEY_NONE		,	KEY_NONE		},
 	/*	86	*/	{	KEY_NONE		,	KEY_NONE		},
 	/*	87	*/	{	KEY_F11			,	KEY_F11			},
-	/*	88	*/	{	KEY_F12			,	KEY_F12			},
-
+	/*	88	*/	{	KEY_F12			,	KEY_F12			}
 };
 
 // return whether Alphabet
 BOOL kIsAlphabetScanCode(BYTE bScanCode){
 
-	if('a'<=(gs_vstKeyMappingTable[bScanCode].bNormalCode) &&
-			(gs_vstKeyMappingTable[bScanCode].bNormalCode) <= 'z' ){
+	if( ('a'<=gs_vstKeyMappingTable[bScanCode].bNormalCode) &&
+		(gs_vstKeyMappingTable[bScanCode].bNormalCode <= 'z') ){
 		return TRUE;
 	}
 
@@ -301,7 +302,7 @@ BOOL kIsAlphabetScanCode(BYTE bScanCode){
 // return whether number or symbol
 BOOL kIsNumberOrSymbolScanCode(BYTE bScanCode){
 	// NOT extended key(2~53) and NOT alphabet
-	if((2 <= bScanCode) && (bScanCode <= 53) && (kIsAlphabetScanCode() == FALSE)){
+	if((2 <= bScanCode) && (bScanCode <= 53) && (kIsAlphabetScanCode(bScanCode) == FALSE)){
 		return TRUE;
 	}
 
@@ -323,7 +324,7 @@ BOOL kIsUseCombinedCode(BYTE bScanCode){
 	bDownScanCode = bScanCode & 0x7f;
 
 	// If Alphabet, It
-	if(kIsAlphabetScanCode(bDownScanCode == TRUE)){
+	if(kIsAlphabetScanCode(bDownScanCode) == TRUE){
 		// Shift down OR CapsLock on, return Combined key
 		if(gs_stKeyboardManager.bShiftDown ^ gs_stKeyboardManager.bCapsLockOn){
 			bUseCombinedKey = TRUE;
@@ -342,8 +343,8 @@ BOOL kIsUseCombinedCode(BYTE bScanCode){
 		}
 	}
 
-	else if(kIsNumberPadScanCode(bDownScanCode) == TRUE &&
-			gs_stKeyboardManager.bExtendedCodeIn == FALSE){
+	else if((kIsNumberPadScanCode(bDownScanCode) == TRUE) &&
+			(gs_stKeyboardManager.bExtendedCodeIn == FALSE)){
 
 		if(gs_stKeyboardManager.bNumLockOn == TRUE){
 			bUseCombinedKey = TRUE;
@@ -373,7 +374,7 @@ void UpdateCombinationKeyStatusAndLED(BYTE bScanCode){
 	}
 
 
-	if((bDownScanCode == 42) || (bDownScnaCode == 54)){
+	if((bDownScanCode == 42) || (bDownScanCode == 54)){
 		gs_stKeyboardManager.bShiftDown = bDown;
 	}
 	else if((bDownScanCode == 58) && (bDown == TRUE)){
@@ -385,7 +386,7 @@ void UpdateCombinationKeyStatusAndLED(BYTE bScanCode){
 		bLEDStatusChanged = TRUE;
 	}
 	else if((bDownScanCode = 70) && (bDown == TRUE)){
-		gs_stKeyboardManager.bSrollLockOn ^= TRUE;
+		gs_stKeyboardManager.bScrollLockOn ^= TRUE;
 		bLEDStatusChanged = TRUE;
 	}
 
@@ -395,9 +396,7 @@ void UpdateCombinationKeyStatusAndLED(BYTE bScanCode){
 	}
 }
 
-
-
-BOLL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlags){
+BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlags){
 
 	BOOL bUseCombinedKey;
 
@@ -428,15 +427,16 @@ BOLL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlag
 
 	if(gs_stKeyboardManager.bExtendedCodeIn == TRUE){
 		*pbFlags = KEY_FLAGS_EXTENDEDKEY;
-		gs_stKeyboardManger.bExtendedCodeIn = FALSE;
+		gs_stKeyboardManager.bExtendedCodeIn = FALSE;
 	}
 	else{
 		*pbFlags = 0;
 	}
 
-	if((bScanCode & 80) == 0){
+	if((bScanCode & 0x80) == 0){
 		*pbFlags |= KEY_FLAGS_DOWN;
 	}
+
 
 	UpdateCombinationKeyStatusAndLED(bScanCode);
 	return TRUE;
