@@ -1,6 +1,6 @@
 all : ImageMaker
 
-ImageMaker: ImageMaker.c
+ImageMaker: 00.ImageMaker/ImageMaker.c
 		gcc -o $@ $<
 		cp $@ ../../
 	
