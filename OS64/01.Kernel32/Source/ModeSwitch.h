@@ -1,5 +1,5 @@
-#ifndef __UTILITY_H__
-#define __UTILITY_H_
+#ifndef __MODESWITCH_H__
+#define __MODESWITCH_H__
 
 #include "Types.h"
 
