@@ -26,7 +26,7 @@ typedef struct kPageTableEntryStruct{
 	// In case of PML4, PDPTE
 	// 1 bit P, RW, US, PWT, PCD, A, 3bit Reserved, Avail, 20bit Base Address
 	// In case of PDE
-	// 1 bit P, RW, US, PWT, PCD, A, D, 1, G, 3bit Avail, 1 bit PAT, 8 bit Avail, 11bit Base Address
+	// 1 bit P, RW, US, PWT, PCD, A, D, PS, G, 3bit Avail, 1 bit PAT, 8 bit Reserved, 11bit Base Address
 	DWORD dwAttributeAndLowerBaseAddress;
 	// 8 bit Upper BaseAddress, 12 bit Reserved, 11 bit Avail, 1 bit EXB
 	DWORD dwUpperBaseAddressAndEXB;
