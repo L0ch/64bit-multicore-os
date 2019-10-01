@@ -94,7 +94,7 @@ BOOL kIsAlphabetScanCode(BYTE bScanCode);
 BOOL kIsNumberOrSymbolScanCode(BYTE bScanCode);
 
 BOOL kIsNumberPadScanCode(BYTE bScanCode);
-BOOL kIsUseCombinedCode(BOOL bScanCode);
+BOOL kIsUseCombinedCode(BYTE bScanCode);
 void UpdateCombinationKeyStatusAndLED(BYTE bScanCode);
 BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlags);
 

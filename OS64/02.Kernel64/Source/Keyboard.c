@@ -155,7 +155,7 @@ void kEnableA20Gate(void){
 	bOutputPortData = kInPortByte(0x60);
 
 	// Set A20 gate bit
-	bOutputPortData |= 0x01;
+	bOutputPortData |= 0x02;
 
 	for(i=0; i<0xFFFF; i++){
 		if(kIsInputBufferFull() == FALSE){
@@ -319,7 +319,7 @@ BOOL kIsNumberPadScanCode(BYTE bScanCode){
 
 BOOL kIsUseCombinedCode(BYTE bScanCode){
 	BYTE bDownScanCode;
-	BOOL bUseCombinedKey;
+	BOOL bUseCombinedKey = FALSE;
 
 	bDownScanCode = bScanCode & 0x7f;
 
