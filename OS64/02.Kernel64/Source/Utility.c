@@ -10,7 +10,7 @@ void kMemSet( void* pvDestination, BYTE bData, int iSize ){
 }
 
 // Copy
-int kMemCpy( void* pvDestination, cont void* pvSource, int iSize ){
+int kMemCpy( void* pvDestination, const void* pvSource, int iSize ){
 	int i;
 
 	for(i=0; i<iSize; i++){
