@@ -35,7 +35,7 @@ void kSetGDTEntry8(GDTENTRY8* pstEntry, DWORD dwBaseAddress, DWORD dwLimit, BYTE
 	pstEntry->wLowerBaseAddress = dwBaseAddress & 0xFFFF;
 	pstEntry->bUpperBaseAddress1 = (dwBaseAddress >> 16) & 0xFF;
 	pstEntry->bTypeAndLowerFlag = bLowerFlags | bType;
-	pstEntry->bUpperLimitAndUpperFlag = ((dwLimit >> 16) * 0x0F) | bUpperFlags;
+	pstEntry->bUpperLimitAndUpperFlag = ((dwLimit >> 16) & 0x0F) | bUpperFlags;
 	pstEntry->bUpperBaseAddress2 = (dwBaseAddress >> 24) & 0xFF;
 }
 
@@ -45,7 +45,7 @@ void kSetGDTEntry16(GDTENTRY16* pstEntry, QWORD qwBaseAddress, DWORD dwLimit, BY
 	pstEntry->wLowerBaseAddress = qwBaseAddress & 0xFFFF;
 	pstEntry->bMiddleBaseAddress1 = (qwBaseAddress >> 16) & 0xFF;
 	pstEntry->bTypeAndLowerFlag = bLowerFlags | bType;
-	pstEntry->bUpperLimitAndUpperFlag = ((dwLimit >> 16) * 0x0F) | bUpperFlags;
+	pstEntry->bUpperLimitAndUpperFlag = ((dwLimit >> 16) & 0x0F) | bUpperFlags;
 	pstEntry->bMiddleBaseAddress2 = (qwBaseAddress >> 24) & 0xFF;
 	pstEntry->dwUpperBaseAddress = qwBaseAddress >> 32;
 	pstEntry->dwReserved = 0;
@@ -74,6 +74,7 @@ void kInitializeIDTTables(void){
 	pstIDTR->qwBaseAddress = (QWORD)pstEntry;
 	pstIDTR->wLimit = IDT_TABLESIZE - 1;
 
+	//Connect 0~99 vector to DummyHandler
 	for(i=0; i<IDT_MAXENTRYCOUNT; i++){
 		kSetIDTEntry(&(pstEntry[i]), kDummyHandler, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
 	}
