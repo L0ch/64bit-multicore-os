@@ -25,7 +25,7 @@ void kCommonInterruptHandler(int iVectorNumber){
 
 	vcBuffer[8]= '0' + g_iCommonInterruptCount;
 	g_iCommonInterruptCount = (g_iCommonInterruptCount + 1) % 10;
-	kPrintString(70,0,vbBuffer);
+	kPrintString(70,0,vcBuffer);
 
 	// Send EOI
 	kSendEOIToPIC(iVectorNumber - PIC_IRQSTARTVECTOR); // Vector number - 0x20 = IRQ Number
@@ -42,7 +42,7 @@ void kKeyboardHandler(int iVectorNumber){
 
 	vcBuffer[8]= '0' + g_iKeyboardInterruptCount;
 	g_iKeyboardInterruptCount = (g_iKeyboardInterruptCount + 1) % 10;
-	kPrintString(0,0,vbBuffer);
+	kPrintString(0,0,vcBuffer);
 
 	// Send EOI
 	kSendEOIToPIC(iVectorNumber - PIC_IRQSTARTVECTOR);
