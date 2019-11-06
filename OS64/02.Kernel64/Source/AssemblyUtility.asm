@@ -3,7 +3,7 @@
 SECTION .text
 
 global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
-
+global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 
 ; Read 1byte from port
 kInPortByte:
@@ -46,6 +46,22 @@ kLoadIDTR:
 	lidt[rdi]	;Load param1(IDTR address) into processor
 	ret
 
+; Enable Interrupt
+kEnableInterrupt:
+	sti
+	ret
+
+; Disable Interrupt
+kDisableInterrupt:
+	cli
+	ret
+
+; Return RFLAGS register
+kReadRFLAGS:
+	pushfq		; push RFLAGS
+	pop rax
+
+	ret			; return RFLAGS
 
 
 
