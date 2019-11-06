@@ -386,7 +386,7 @@ kISRFloppy:
 	iretq
 
 ; #39, Parallel Port1
-kISRParallel:
+kISRParallel1:
 	KSAVECONTEXT
 
 	mov rdi, 39

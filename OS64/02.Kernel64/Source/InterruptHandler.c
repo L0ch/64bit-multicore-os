@@ -8,9 +8,11 @@ void kCommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode){
 	vcBuffer[0] = '0' + iVectorNumber / 10;
 	vcBuffer[1] = '0' + iVectorNumber % 10;
 
-	kPrintString(0,0,"Exception Occur");
-	kPrintString(0,1,"Vector:");
-	kPrintString(10,1, vcBuffer);
+	kPrintString(0,0, "==============Exception Occur==============");
+	kPrintString(0,1, "                                           ");
+	kPrintString(0,1, "Vector: ");
+	kPrintString(8,1, vcBuffer);
+	kPrintString(0,2, "===========================================");
 
 	while(1);
 }
@@ -42,7 +44,7 @@ void kKeyboardHandler(int iVectorNumber){
 
 	vcBuffer[8]= '0' + g_iKeyboardInterruptCount;
 	g_iKeyboardInterruptCount = (g_iKeyboardInterruptCount + 1) % 10;
-	kPrintString(0,0,vcBuffer);
+	kPrintString(70,1,vcBuffer);
 
 	// Send EOI
 	kSendEOIToPIC(iVectorNumber - PIC_IRQSTARTVECTOR);

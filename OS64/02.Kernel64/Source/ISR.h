@@ -6,7 +6,7 @@
 void kISRDivideError(void);
 void kISRDebug(void);
 void kISRNMI(void);
-void kISRBreakPorint(void);
+void kISRBreakPoint(void);
 void kISROverflow(void);
 void kISRBoundRangeExceeded(void);
 void kISRInvalidOpcode();
@@ -21,7 +21,7 @@ void kISRPageFault(void);
 void kISR15(void);
 void kISRFPUError(void);
 void kISRAlignmentCheck(void);
-void kISRMachinCheck(void);
+void kISRMachineCheck(void);
 void kISRSIMDError(void);
 void kISRETCException(void);
 
