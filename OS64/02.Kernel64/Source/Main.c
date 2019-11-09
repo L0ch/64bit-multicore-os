@@ -9,9 +9,9 @@ void kPrintString(int iX, int iY, const char* pcString);
 void Main(void){
 
 	char vcTemp[2] = {0, };
-	BYTE bFlags;
 	BYTE bTemp;
 	int i = 0;
+	KEYDATA stData;
 
 	kPrintString(0,10, "Switch To IA-32e Mode Success");
 	kPrintString(0,11, "IA-32e Kernel Start..........................[Done]");
@@ -33,7 +33,7 @@ void Main(void){
 	kPrintString(0,15, "Keyboard Activate............................[    ]");
 
 	//kPrintString(0,13, "TEST");
-	if(kActivateKeyboard() == TRUE){
+	if(kInitializeKeyboard() == TRUE){
 		kPrintString(46,15,"Done");
 		kChangeKeyboardLED(FALSE, FALSE, FALSE);
 	}
@@ -49,17 +49,16 @@ void Main(void){
 	kPrintString(46,16,"Done");
 
 	while(1){
-		if(kIsOutputBufferFull() == TRUE){
-			bTemp = kGetKeyboardScanCode();
-
-			if(kConvertScanCodeToASCIICode(bTemp, &(vcTemp[0]), &bFlags) == TRUE){
-				if(bFlags & KEY_FLAGS_DOWN){
-					kPrintString(i++, 17, vcTemp);
-					if(vcTemp[0] == '0'){
-						// Divide Error Exception
-						// Execute dummyHandler
-						bTemp = bTemp / 0;
-					}
+		// If data exist in Queue
+		if(kGetKeyFromKeyQueue(&stData) == TRUE){
+			// Print ASCII code
+			if(stData.bFlags & KEY_FLAGS_DOWN){
+				vcTemp[0] = stData.bASCIICode;
+				kPrintString(i++, 17, vcTemp);
+				if(vcTemp[0] == '0'){
+					// Divide Error Exception
+					// Execute dummyHandler
+					bTemp = bTemp / 0;
 				}
 			}
 		}

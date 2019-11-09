@@ -1,6 +1,8 @@
 #include "Types.h"
 #include "AssemblyUtility.h"
 #include "Keyboard.h"
+#include "Queue.h"
+
 
 // Return whether Data was received in output buffer
 BOOL kIsOutputBufferFull(void){
@@ -24,10 +26,42 @@ BOOL kIsInputBufferFull(void){
 	return FALSE;
 }
 
+BOOL kWaitForACKAndPutOtherScanCode(void){
+	int i,j;
+	BYTE bData;
+	BOOL bResult = FALSE;
+
+	//
+	for(j=0; j<100; j++){
+		// Wait until 0xFFFF loop
+		for(i=0; i<0xFFFF; i++){
+			if(kIsOutputBufferFull() == TRUE){
+				break;
+			}
+		}
+		// Success If data read is 0xFA(ACK)
+		bData = kInPortByte(0x60);
+		if(bData == 0xFA){
+			bResult = TRUE;
+			break;
+		}
+		// If NOT ACK(0xFA), Convert to ASCII code
+		else{
+			kConvertScanCodeAndPutQueue(bData);
+		}
+	}
+	return bResult;
+}
+
 // Activate keyboard
 BOOL kActivateKeyboard(void){
 
 	int i,j;
+	BOOL bPreviousInterrupt;
+	BOOL bResult;
+
+	// Disable Interrupt
+	bPreviousInterrupt = kSetInterruptFlag(FALSE);
 
 	// Send keyboard activate command(0xAE) to control register
 	kOutPortByte(0x64, 0xAE);
@@ -42,21 +76,12 @@ BOOL kActivateKeyboard(void){
 	// Send activate command(0xF4) to keyboard
 	kOutPortByte(0x60, 0xF4);
 
-	// Wait until receive ACK
-	for(j=0; j<100; j++){
-		for(i=0; i<0xFFFF; i++){
-			if(kIsOutputBufferFull() == TRUE ){
-				break;
-			}
-		}
+	//Wait for ACK
+	bResult = kWaitForACKAndPutOtherScanCode();
 
-		// Success if data read is ACK
-		if(kInPortByte(0x60) == 0xFA){
-			return TRUE;
-		}
-	}
-	return FALSE;
-
+	// restore Previous Interrupt
+	kSetInterruptFlag(bPreviousInterrupt);
+	return bResult;
 }
 
 // Get key from output buffer
@@ -74,6 +99,12 @@ BYTE kGetKeyboardScanCode(void){
 BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn ){
 
 	int i,j;
+	BOOL bPreviousInterrupt;
+	BOOL bResult;
+	BYTE bData;
+
+	// Disable interrupt
+	bPreviousInterrupt = kSetInterruptFlag(FALSE);
 
 	// Wait until input buffer is empty
 	for(i=0; i<0xFFFF; i++){
@@ -90,21 +121,13 @@ BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn ){
 		}
 	}
 
-	// Wait until receive ACK
-	for(j=0; j<100; j++){
-		for(i=0; i<0xFFFF; i++){
-			// If output buffer is full, get data
-			if(kIsOutputBufferFull() == TRUE){
-				break;
-			}
-		}
-		// ACK
-		if(kInPortByte(0x60) == 0xFA){
-			break;
-		}
-	}
+	// Wait for ACK
+	bResult = kWaitForACKAndPutOtherScanCode();
 
-	if(j >= 100){
+
+	if(bResult == FALSE){
+		// Restore previous interrupt
+		kSetInterruptFlag(bPreviousInterrupt);
 		return FALSE;
 	}
 
@@ -117,22 +140,11 @@ BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn ){
 		}
 	}
 
-	// ACK
-	for(j=0; j<100; j++){
-		for(i=0; i<0xFFFF; i++){
-			if(kIsOutputBufferFull() == TRUE){
-				break;
-			}
-		}
-		if(kInPortByte(0x60) == 0xFA){
-			break;
-		}
-	}
-	if(j >= 100){
-		return FALSE;
-	}
-
-	return TRUE;
+	// Wait for ACK
+	bResult = kWaitForACKAndPutOtherScanCode();
+	// Restore previous interrupt
+	kSetInterruptFlag(bPreviousInterrupt);
+	return bResult;
 
 }
 // Activate A20 Gate
@@ -193,6 +205,10 @@ void kReboot(void){
 ////////////////////////////
 
 static KEYBOARDMANAGER gs_stKeyboardManager = { 0, };
+
+// Queue/Buffer
+static QUEUE gs_stKeyQueue;
+static KEYDATA gs_vstKeyQueueBuffer[KEY_MAXQUEUECOUNT];
 
 static KEYMAPPINGENTRY gs_vstKeyMappingTable[ KEY_MAPPINGTABLEMAXCOUNT ] ={
 	/*	0	*/	{	KEY_NONE		,	KEY_NONE		},
@@ -323,7 +339,7 @@ BOOL kIsUseCombinedCode(BYTE bScanCode){
 
 	bDownScanCode = bScanCode & 0x7f;
 
-	// If Alphabet, It
+
 	if(kIsAlphabetScanCode(bDownScanCode) == TRUE){
 		// Shift down OR CapsLock on, return Combined key
 		if(gs_stKeyboardManager.bShiftDown ^ gs_stKeyboardManager.bCapsLockOn){
@@ -442,12 +458,56 @@ BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlag
 	return TRUE;
 }
 
+BOOL kInitializeKeyboard(void){
+	kInitializeQueue(&gs_stKeyQueue, gs_vstKeyQueueBuffer, KEY_MAXQUEUECOUNT, sizeof(KEYDATA));
+
+	return kActivateKeyboard();
+}
+
+BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode){
+	KEYDATA stData;
+	BOOL bResult = FALSE;
+	BOOL bPreviousInterrupt;
+
+
+	stData.bScanCode = bScanCode;
+
+	// Convert scan code to ASCII code
+	if(kConvertScanCodeToASCIICode(bScanCode, &(stData.bASCIICode), &(stData.bFlags)) == TRUE){
+		// Interrupt disable
+		bPreviousInterrupt = kSetInterruptFlag(FALSE);
+
+		// Insert key data
+		bResult = kPutQueue(&gs_stKeyQueue, &stData);
+
+		// Restore interrupt flag
+		kSetInterruptFlag(bPreviousInterrupt);
+	}
+
+	return bResult;
+}
 
 
 
+BOOL kGetKeyFromKeyQueue(KEYDATA* pstData){
+	BOOL bResult;
+	BOOL bPreviousInterrupt;
 
+	// If Queue is empty, Do not get key data
+	if(kIsQueueEmpty(&gs_stKeyQueue) == TRUE){
+		return FALSE;
+	}
 
+	// Interrupt disable
+	bPreviousInterrupt = kSetInterruptFlag(FALSE);
 
+	// Get key data(In Queue, remove data)
+	bResult = kGetQueue(&gs_stKeyQueue, pstData);
+
+	// Restore interrupt flag
+	kSetInterruptFlag(bPreviousInterrupt);
+	return bResult;
+}
 
 
 
