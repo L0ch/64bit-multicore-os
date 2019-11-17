@@ -187,8 +187,11 @@ void StringToDecimalHex(const char* pcParameterBuffer){
 
 		// Parameter not exist
 		if(iLength == 0){
-			Printf("There is No Parameter\n");
-			Printf("Usage: strtod [DECIMAL/HEXADECIMAL]...\n");
+
+			if(iCount == 1){
+				Printf("There is No Parameter\n");
+				Printf("Usage: strtod [DECIMAL/HEXADECIMAL]...\n");
+			}
 			break;
 		}
 
