@@ -147,7 +147,7 @@ void kSetIDTEntry(IDTENTRY* pstEntry, void* pvHandler, WORD wSelector, BYTE bIST
 	pstEntry->dwReserved = 0;
 }
 
-
+/*
 //dummy
 void kDummyHandler(void){
 	kPrintString(0, 0, "=====================================================================");
@@ -156,6 +156,6 @@ void kDummyHandler(void){
 	kPrintString(0, 3, "=====================================================================");
 
 	while(1);
-}
+}*/
 
 
