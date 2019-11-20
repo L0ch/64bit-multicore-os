@@ -13,7 +13,7 @@
 
 #pragma pack( push, 1 )
 
-typedef struct kCharactorStruct
+typedef struct CharactorStruct
 {
 	BYTE bCharactor;
 	BYTE bAttribute;

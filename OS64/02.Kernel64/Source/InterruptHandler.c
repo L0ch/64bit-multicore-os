@@ -4,7 +4,7 @@
 #include "Console.h"
 
 
-void kCommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode){
+void CommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode){
 	char vcBuffer[3] = {0, };
 	// Print interrupt vector
 	vcBuffer[0] = '0' + iVectorNumber / 10;
@@ -19,7 +19,7 @@ void kCommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode){
 	while(1);
 }
 
-void kCommonInterruptHandler(int iVectorNumber){
+void CommonInterruptHandler(int iVectorNumber){
 	char vcBuffer[] = "[INT:  , ]";
 	static int g_iCommonInterruptCount=0;
 
@@ -32,11 +32,11 @@ void kCommonInterruptHandler(int iVectorNumber){
 	PrintStringXY(70,0,vcBuffer);
 
 	// Send EOI
-	kSendEOIToPIC(iVectorNumber - PIC_IRQSTARTVECTOR); // Vector number - 0x20 = IRQ Number
+	SendEOIToPIC(iVectorNumber - PIC_IRQSTARTVECTOR); // Vector number - 0x20 = IRQ Number
 }
 
 
-void kKeyboardHandler(int iVectorNumber){
+void KeyboardHandler(int iVectorNumber){
 	char vcBuffer[] = "[INT:  , ]";
 	static int g_iKeyboardInterruptCount = 0;
 	BYTE bTemp;
@@ -49,13 +49,13 @@ void kKeyboardHandler(int iVectorNumber){
 	g_iKeyboardInterruptCount = (g_iKeyboardInterruptCount + 1) % 10;
 	PrintStringXY(70,1,vcBuffer);
 
-	if(kIsOutputBufferFull() == TRUE){
-		bTemp = kGetKeyboardScanCode();
-		kConvertScanCodeAndPutQueue(bTemp);
+	if(IsOutputBufferFull() == TRUE){
+		bTemp = GetKeyboardScanCode();
+		ConvertScanCodeAndPutQueue(bTemp);
 	}
 
 	// Send EOI
-	kSendEOIToPIC(iVectorNumber - PIC_IRQSTARTVECTOR);
+	SendEOIToPIC(iVectorNumber - PIC_IRQSTARTVECTOR);
 }
 
 

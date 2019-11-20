@@ -59,7 +59,7 @@
 #pragma pack(push,1)
 
 // scan code table
-typedef struct kKeyMappingEntryStruct{
+typedef struct KeyMappingEntryStruct{
 
 	//ASCII NOT combined with Shift key or Caps Lock key
 	BYTE bNormalCode;
@@ -70,7 +70,7 @@ typedef struct kKeyMappingEntryStruct{
 
 
 // keyboard status management structure
-typedef struct kKeyboardManagerStruct{
+typedef struct KeyboardManagerStruct{
 	// combined key info
 	BOOL bShiftDown;
 	BOOL bCapsLockOn;
@@ -83,7 +83,7 @@ typedef struct kKeyboardManagerStruct{
 } KEYBOARDMANAGER;
 
 // Structure for key Queue
-typedef struct kKeyDataStruct{
+typedef struct KeyDataStruct{
 	BYTE bScanCode;
 	BYTE bASCIICode;
 	BYTE bFlags;
@@ -92,23 +92,25 @@ typedef struct kKeyDataStruct{
 #pragma pack (pop)
 
 //Function
-BOOL kIsOutputBufferFull(void);
-BOOL kIsInputBufferFull(void);
-BOOL kActivateKeyboard(void);
-BYTE kGetKeyboardScanCode(void);
-BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn);
-void kEnablreA20Gate(void);
-void kReboot(void);
-BOOL kIsAlphabetScanCode(BYTE bScanCode);
-BOOL kIsNumberOrSymbolScanCode(BYTE bScanCode);
+BOOL IsOutputBufferFull(void);
+BOOL IsInputBufferFull(void);
+BOOL ActivateKeyboard(void);
+BYTE GetKeyboardScanCode(void);
+BOOL ChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn);
+void EnablreA20Gate(void);
+void Reboot(void);
+BOOL IsAlphabetScanCode(BYTE bScanCode);
+BOOL IsNumberOrSymbolScanCode(BYTE bScanCode);
+BOOL GetKeyFromKeyQueue(KEYDATA* pstData);
 
-BOOL kIsNumberPadScanCode(BYTE bScanCode);
-BOOL kIsUseCombinedCode(BYTE bScanCode);
+
+BOOL IsNumberPadScanCode(BYTE bScanCode);
+BOOL IsUseCombinedCode(BYTE bScanCode);
 void UpdateCombinationKeyStatusAndLED(BYTE bScanCode);
-BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlags);
-BOOL kInitializeKeyboard(void);
-BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode);
-BOOL kWaitForACKAndPutOtherScanCode(void);
+BOOL ConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlags);
+BOOL InitializeKeyboard(void);
+BOOL ConvertScanCodeAndPutQueue(BYTE bScanCode);
+BOOL WaitForACKAndPutOtherScanCode(void);
 
 #endif /*__KEYBOARD_H__*/
 

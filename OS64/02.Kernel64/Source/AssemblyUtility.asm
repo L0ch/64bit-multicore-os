@@ -2,11 +2,11 @@
 
 SECTION .text
 
-global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
-global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
+global InPortByte, OutPortByte, LoadGDTR, LoadTR, LoadIDTR
+global EnableInterrupt, DisableInterrupt, ReadRFLAGS
 
 ; Read 1byte from port
-kInPortByte:
+InPortByte:
 	push rdx
 
 	mov rdx, rdi	; RDX = PARAM 1(Port Num)
@@ -17,7 +17,7 @@ kInPortByte:
 	ret				; return RAX
 
 ; Write 1byte to port
-kOutPortByte:
+OutPortByte:
 	push rdx
 	push rax
 
@@ -30,34 +30,34 @@ kOutPortByte:
 	ret
 ; Set GDTR register
 ; PARAM : GDT struct Address
-kLoadGDTR:
+LoadGDTR:
 	lgdt[rdi]	; Load param1(GDTR address) into processor
 	ret
 
 ; Set TR register
 ; PARAM : TSS Descriptor offset
-kLoadTR:
+LoadTR:
 	ltr di		; Load param1(TSS Descriptor offset) into processor
 	ret
 
 ; Set IDTR register
 ; PARAM : IDT struct address
-kLoadIDTR:
+LoadIDTR:
 	lidt[rdi]	;Load param1(IDTR address) into processor
 	ret
 
 ; Enable Interrupt
-kEnableInterrupt:
+EnableInterrupt:
 	sti
 	ret
 
 ; Disable Interrupt
-kDisableInterrupt:
+DisableInterrupt:
 	cli
 	ret
 
 ; Return RFLAGS register
-kReadRFLAGS:
+ReadRFLAGS:
 	pushfq		; push RFLAGS
 	pop rax
 

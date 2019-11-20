@@ -85,7 +85,7 @@
 #pragma pack(push, 1)
 
 //GDT, IDTR
-typedef struct kGDTRStruct{
+typedef struct GDTRStruct{
 	WORD wLimit;
 	QWORD qwBaseAddress;
 	WORD wPading;
@@ -93,7 +93,7 @@ typedef struct kGDTRStruct{
 }GDTR, IDTR;
 
 //structure of 8byte size GDT Entry
-typedef struct kGDTEntry8Struct{
+typedef struct GDTEntry8Struct{
 	WORD wLowerLimit;
 	WORD wLowerBaseAddress;
 	BYTE bUpperBaseAddress1;
@@ -103,7 +103,7 @@ typedef struct kGDTEntry8Struct{
 }GDTENTRY8;
 
 //structure of 16byte size GDT Entry
-typedef struct kGDTEntry16Struct{
+typedef struct GDTEntry16Struct{
 	WORD wLowerLimit;
 	WORD wLowerBaseAddress;
 	BYTE bMiddleBaseAddress1;
@@ -115,7 +115,7 @@ typedef struct kGDTEntry16Struct{
 }GDTENTRY16;
 
 // TSS Data
-typedef struct kTSSDataStruct{
+typedef struct TSSDataStruct{
 	DWORD dwReserved1;
 	QWORD qwRsp[3];
 	QWORD qwReserved2;
@@ -125,7 +125,7 @@ typedef struct kTSSDataStruct{
 	WORD wIOMapBaseAddress;
 }TSSSEGMENT;
 
-typedef struct kIDTEntryStruct{
+typedef struct IDTEntryStruct{
 	WORD wLowerBaseAddress;
 	WORD wSegmentSelector;
 	BYTE bIST;
@@ -138,13 +138,13 @@ typedef struct kIDTEntryStruct{
 #pragma pack(pop)
 
 //Function
-void kInitializeGDTTableAndTSS(void);
-void kSetGDTEntry8( GDTENTRY8* pstEntry, DWORD dwBaseAddress, DWORD dwLimit, BYTE bUpperFlags, BYTE bLowerFlags, BYTE bType );
-void kSetGDTEntry16( GDTENTRY16* pstEntry, QWORD qwBaseAddress, DWORD dwLimit, BYTE bUpperFlags, BYTE bLowerFlags, BYTE bType );
-void kInitializeTSSSegment( TSSSEGMENT* pstTSS );
+void InitializeGDTTableAndTSS(void);
+void SetGDTEntry8( GDTENTRY8* pstEntry, DWORD dwBaseAddress, DWORD dwLimit, BYTE bUpperFlags, BYTE bLowerFlags, BYTE bType );
+void SetGDTEntry16( GDTENTRY16* pstEntry, QWORD qwBaseAddress, DWORD dwLimit, BYTE bUpperFlags, BYTE bLowerFlags, BYTE bType );
+void InitializeTSSSegment( TSSSEGMENT* pstTSS );
 
-void kInitializeIDTTables(void);
-void kSetIDTEntry( IDTENTRY* pstEntry, void* pvHandler, WORD wSelector, BYTE bIST, BYTE bFlags, BYTE bType );
+void InitializeIDTTables(void);
+void SetIDTEntry( IDTENTRY* pstEntry, void* pvHandler, WORD wSelector, BYTE bIST, BYTE bFlags, BYTE bType );
 //void kDummyHandler(void);
 
 #endif /*__DESCRIPTOR_H__*/

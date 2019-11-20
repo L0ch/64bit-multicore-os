@@ -4,9 +4,9 @@
 #include "Types.h"
 
 //Function
-void kCommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode);
-void kCommonInterruptHnadler(int iVectorNumber);
-void kKeyboardHandler(int iVectorNumber);
+void CommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode);
+void CommonInterruptHnadler(int iVectorNumber);
+void KeyboardHandler(int iVectorNumber);
 
 
 

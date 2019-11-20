@@ -41,7 +41,7 @@ void StartConsoleShell(void){
 			}
 
 			Printf("%s", CONSOLESHELL_PROMPTMESSAGE);
-			kMemSet(vcCommandBuffer, '\0', CONSOLESHELL_MAXCOMMANDBUFFERCOUNT);
+			MemSet(vcCommandBuffer, '\0', CONSOLESHELL_MAXCOMMANDBUFFERCOUNT);
 			CommandBufferIndex = 0;
 		}
 		else if((bKey == KEY_LSHIFT) || (bKey == KEY_RSHIFT) || (bKey == KEY_CAPSLOCK) ||
@@ -84,7 +84,7 @@ void ExecuteCommand(const char* pcCommandBuffer){
 		CommandLength = StrLen(gs_vstCommandTable[i].pcCommand);
 		//
 		if((CommandLength == SpaceIndex) &&
-		   (kMemCmp(gs_vstCommandTable[i].pcCommand, pcCommandBuffer, SpaceIndex)==0)){
+		   (MemCmp(gs_vstCommandTable[i].pcCommand, pcCommandBuffer, SpaceIndex)==0)){
 			// Execute command function
 			gs_vstCommandTable[i].pfFunction(pcCommandBuffer + SpaceIndex +1);
 			break;
@@ -120,7 +120,7 @@ int GetNextParameter(PARAMETERLIST* pstList, char* pcParameter){
 	}
 
 	// Copy parameter and return length
-	kMemCpy(pcParameter, pstList->pcBuffer + pstList->CurrentPosition, i);
+	MemCpy(pcParameter, pstList->pcBuffer + pstList->CurrentPosition, i);
 	Length = i - pstList->CurrentPosition;
 	pcParameter[Length] = '\0';
 
@@ -199,7 +199,7 @@ void StringToDecimalHex(const char* pcParameterBuffer){
 		Printf("Parameter %d = '%s', Length = %d, ", iCount +1, vcParameter, iLength);
 
 		// If '0x' Hex
-		if(kMemCmp(vcParameter, "0x", 2) == 0){
+		if(MemCmp(vcParameter, "0x", 2) == 0){
 			lValue = AToI(vcParameter + 2, 16);
 			Printf("HEX Value = %q\n",lValue);
 		}
@@ -217,7 +217,7 @@ void Shutdown(const char* pcParameterBuffer){
 
 	Printf("Press Any Key To Reboot...");
 	GetCh();
-	kReboot();
+	Reboot();
 }
 
 

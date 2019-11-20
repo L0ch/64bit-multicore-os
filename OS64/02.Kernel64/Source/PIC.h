@@ -14,8 +14,8 @@
 #define PIC_IRQSTARTVECTOR	0x20
 
 // Function
-void kInitializePIC(void);
-void kMaskPICInterrupt(WORD wIRQBitmask);
-void kSendEOIToPIC(int iIRQNumber);
+void InitializePIC(void);
+void MaskPICInterrupt(WORD wIRQBitmask);
+void SendEOIToPIC(int iIRQNumber);
 
 #endif /*__PIC_H__*/

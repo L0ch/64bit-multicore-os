@@ -4,7 +4,7 @@
 
 
 // Fill Memory with specific value
-void kMemSet( void* pvDestination, BYTE bData, int iSize ){
+void MemSet( void* pvDestination, BYTE bData, int iSize ){
 	int i;
 
 	for(i=0; i<iSize; i++){
@@ -13,7 +13,7 @@ void kMemSet( void* pvDestination, BYTE bData, int iSize ){
 }
 
 // Copy
-int kMemCpy( void* pvDestination, const void* pvSource, int iSize ){
+int MemCpy( void* pvDestination, const void* pvSource, int iSize ){
 	int i;
 
 	for(i=0; i<iSize; i++){
@@ -23,7 +23,7 @@ int kMemCpy( void* pvDestination, const void* pvSource, int iSize ){
 }
 
 // Compare
-int kMemCmp( const void* pvDestination, const void* pvSource, int iSize ){
+int MemCmp( const void* pvDestination, const void* pvSource, int iSize ){
 	int i;
 	char cTemp;
 
@@ -36,15 +36,15 @@ int kMemCmp( const void* pvDestination, const void* pvSource, int iSize ){
 	return 0;
 }
 // Change interrupt flag, return previous interrupt flag status
-BOOL kSetInterruptFlag(BOOL bEnableInterrupt){
+BOOL SetInterruptFlag(BOOL bEnableInterrupt){
 	QWORD qwRFLAGS;
 
-	qwRFLAGS = kReadRFLAGS();
+	qwRFLAGS = ReadRFLAGS();
 	if(bEnableInterrupt == TRUE){
-		kEnableInterrupt();
+		EnableInterrupt();
 	}
 	else{
-		kDisableInterrupt();
+		DisableInterrupt();
 	}
 
 	if(qwRFLAGS & 0x0200){
@@ -66,7 +66,7 @@ int StrLen(const char* pcBuffer){
 }
 
 // Total Memory Size(MB)
-static gs_qwTotalMemoryMBSize = 0;
+static int gs_qwTotalMemoryMBSize = 0;
 
 void CheckTotalMemorySize(void){
 	DWORD* pdwCurrentAddress;
@@ -285,7 +285,7 @@ int VSPrintf(char* pcBuffer, const char* pcFormatString, va_list ap){
 				CopyLength = StrLen(pcCopyString);
 				// Copy to print buffer
 				// Buffer index + copied length
-				kMemCpy(pcBuffer + BufferIndex, pcCopyString, CopyLength);
+				MemCpy(pcBuffer + BufferIndex, pcCopyString, CopyLength);
 				BufferIndex += CopyLength;
 				break;
 			// Character

@@ -6,7 +6,7 @@
 // structure
 #pragma pack(push,1)
 
-typedef struct kQueueManagerStruct{
+typedef struct QueueManagerStruct{
 	// Each data size of Queue
 	int iDataSize;
 	// Max index of Queue
@@ -26,11 +26,11 @@ typedef struct kQueueManagerStruct{
 #pragma pack(pop)
 
 //Function
-void kInitializeQueue(QUEUE* pstQueue, void* pvQueueBuffer, int iMaxDataCount, int iDataSize);
-BOOL kIsQueueFull(const QUEUE* pstQueue);
-BOOL kIsQueueEmpty(const QUEUE* pstQueue);
-BOOL kPutQueue(QUEUE* pstQueue, const void* pvData);
-BOOL kGetQueue(QUEUE* pstQueue, const void* pvData);
+void InitializeQueue(QUEUE* pstQueue, void* pvQueueBuffer, int iMaxDataCount, int iDataSize);
+BOOL IsQueueFull(const QUEUE* pstQueue);
+BOOL IsQueueEmpty(const QUEUE* pstQueue);
+BOOL PutQueue(QUEUE* pstQueue, const void* pvData);
+BOOL GetQueue(QUEUE* pstQueue, void* pvData);
 
 #endif /*__QUEUE_H__*/
 

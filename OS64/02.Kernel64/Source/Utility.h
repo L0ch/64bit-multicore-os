@@ -5,10 +5,10 @@
 #include "Types.h"
 
 //Function
-void kMemSet( void* pvDestination, BYTE bData, int iSize );
-int kMemCpy( void* pvDestination, const void* pvSource, int iSize );
-int kMemCmp( const void* pvDestination, const void* pvSource, int iSize );
-BOOL kSetInterruptFlag(BOOL bEnableInterrupt);
+void MemSet( void* pvDestination, BYTE bData, int iSize );
+int MemCpy( void* pvDestination, const void* pvSource, int iSize );
+int MemCmp( const void* pvDestination, const void* pvSource, int iSize );
+BOOL SetInterruptFlag(BOOL bEnableInterrupt);
 void CheckTotalMemorySize(void);
 QWORD GetTotalMemorySize(void);
 void ReverseString(char* pcBuffer);
@@ -20,5 +20,6 @@ int HexToString(QWORD qwValue, char* pcBuffer);
 int DecimalToString(long lValue, char* pcBuffer);
 int SPrintf(char* pcBuffer, const char* pcFormatString, ...);
 int VSPrintf(char* pcBuffer, const char* pcFormatString, va_list ap);
+int StrLen(const char* pcBuffer);
 
 #endif /*__UTILITY_H__*/

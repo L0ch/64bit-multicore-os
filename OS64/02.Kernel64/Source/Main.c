@@ -4,6 +4,8 @@
 #include "PIC.h"
 #include "Console.h"
 #include "ConsoleShell.h"
+#include "AssemblyUtility.h"
+#include "Utility.h"
 
 void Main(void){
 
@@ -17,20 +19,20 @@ void Main(void){
 
 	GetCursor(&CursorX, &CursorY);
 	Printf("GDT Initialize And Switch For IA-32e Mode....[    ]");
-	kInitializeGDTTableAndTSS();
-	kLoadGDTR(GDTR_STARTADDRESS);
+	InitializeGDTTableAndTSS();
+	LoadGDTR(GDTR_STARTADDRESS);
 	SetCursor(46, CursorY++);
 	Printf("Done\n");
 
 	Printf("TSS Segment Load.............................[    ]");
-	kLoadTR(GDT_TSSSEGMENT);
+	LoadTR(GDT_TSSSEGMENT);
 	SetCursor(46, CursorY++);
 	Printf("Done\n");
 
 
 	Printf("IDT Initialize...............................[    ]");
-	kInitializeIDTTables();
-	kLoadIDTR(IDTR_STARTADDRESS);
+	InitializeIDTTables();
+	LoadIDTR(IDTR_STARTADDRESS);
 	SetCursor(46, CursorY++);
 	Printf("Done\n");
 
@@ -42,10 +44,10 @@ void Main(void){
 	Printf("Keyboard Activate............................[    ]");
 
 	//Printf(0,13, "TEST");
-	if(kInitializeKeyboard() == TRUE){
+	if(InitializeKeyboard() == TRUE){
 		SetCursor(46, CursorY++);
 		Printf("Done\n");
-		kChangeKeyboardLED(FALSE, FALSE, FALSE);
+		ChangeKeyboardLED(FALSE, FALSE, FALSE);
 	}
 	else{
 		SetCursor(46, CursorY++);
@@ -54,9 +56,9 @@ void Main(void){
 	}
 
 	Printf("PIC Controller And Interrupt Initialize......[    ]");
-	kInitializePIC();
-	kMaskPICInterrupt(0);
-	kEnableInterrupt();
+	InitializePIC();
+	MaskPICInterrupt(0);
+	EnableInterrupt();
 	SetCursor(46, CursorY++);
 	Printf("Done\n");
 

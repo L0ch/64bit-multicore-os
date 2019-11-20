@@ -3,13 +3,13 @@
 
 #include "Types.h"
 
-BYTE kInPortByte(WORD wPort);
-void kOutPortByte(WORD wPort, BYTE bData );
-void kLoadGDTR(QWORD qwGDTRAddress);
-void kLoadTR(WORD wTSSSegmentOffset);
-void kLoadIDTR(QWORD qwIDTRAddress);
-void kEnableInterrupt(void);
-void kDisableInterrupt(void);
-QWORD kReadRFLAGS(void);
+BYTE InPortByte(WORD wPort);
+void OutPortByte(WORD wPort, BYTE bData );
+void LoadGDTR(QWORD qwGDTRAddress);
+void LoadTR(WORD wTSSSegmentOffset);
+void LoadIDTR(QWORD qwIDTRAddress);
+void EnableInterrupt(void);
+void DisableInterrupt(void);
+QWORD ReadRFLAGS(void);
 
 #endif /*__ASSEMBLYUTILITY_H__*/

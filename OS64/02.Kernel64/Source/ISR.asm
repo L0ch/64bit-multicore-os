@@ -3,23 +3,23 @@
 SECTION .text
 
 ; Import
-extern kCommonExceptionHandler, kCommonInterruptHandler, kKeyboardHandler
+extern CommonExceptionHandler, CommonInterruptHandler, KeyboardHandler
 
 ; Export
 ; ISR for Processing Exception
-global kISRDivideError, kISRDebug, kISRNMI, kISRBreakPoint, kISROverflow
-global kISRBoundRangeExceeded, kISRInvalidOpcode, kISRDeviceNotAvailable, kISRDoubleFault
-global kISRCoprocessorSegmentOverrun, kISRInvalidTSS, kISRSegmentNotPresent
-global kISRStackSegmentFault, kISRGeneralProtection, kISRPageFault, kISR15
-global kISRFPUError, kISRAlignmentCheck, kISRMachineCheck, kISRSIMDError,kISRETCException
+global ISRDivideError, ISRDebug, ISRNMI, ISRBreakPoint, ISROverflow
+global ISRBoundRangeExceeded, ISRInvalidOpcode, ISRDeviceNotAvailable, ISRDoubleFault
+global ISRCoprocessorSegmentOverrun, ISRInvalidTSS, ISRSegmentNotPresent
+global ISRStackSegmentFault, ISRGeneralProtection, ISRPageFault, ISR15
+global ISRFPUError, ISRAlignmentCheck, ISRMachineCheck, ISRSIMDError, ISRETCException
 
 ; ISR for Processing Interrupt
-global kISRTimer, kISRKeyboard, kISRSlavePIC, kISRSerial2, kISRSerial1, kISRParallel2
-global kISRFloppy, kISRParallel1, kISRRTC, kISRReserved, kISRNotUsed1, kISRNotUsed2
-global kISRMouse, kISRCoprocessor, kISRHDD1, kISRHDD2, kISRETCInterrupt
+global ISRTimer, ISRKeyboard, ISRSlavePIC, ISRSerial2, ISRSerial1, ISRParallel2
+global ISRFloppy, ISRParallel1, ISRRTC, ISRReserved, ISRNotUsed1, ISRNotUsed2
+global ISRMouse, ISRCoprocessor, ISRHDD1, ISRHDD2, ISRETCInterrupt
 
 ; Save Context / Replace Selector
-%macro KSAVECONTEXT 0
+%macro SAVECONTEXT 0
 	; push RBP ~ GS segment selector in stack
 	push rbp
 	mov rbp, rsp
@@ -54,7 +54,7 @@ global kISRMouse, kISRCoprocessor, kISRHDD1, kISRHDD2, kISRETCInterrupt
 %endmacro
 
 ; Restore Context
-%macro KLOADCONTEXT 0
+%macro LOADCONTEXT 0
 	; Load GS segment selector ~ RBP register
 
 	; Load Kernel data segment descriptor
@@ -87,227 +87,227 @@ global kISRMouse, kISRCoprocessor, kISRHDD1, kISRHDD2, kISRETCInterrupt
 ; Exception Handler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; #0, Divide Error ISR
-kISRDivideError:
-	KSAVECONTEXT
+ISRDivideError:
+	SAVECONTEXT
 
 	mov rdi, 0
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #1, Debug ISR
-kISRDebug:
-	KSAVECONTEXT
+ISRDebug:
+	SAVECONTEXT
 
 	mov rdi, 1
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #2, NMI ISR
-kISRNMI:
-	KSAVECONTEXT
+ISRNMI:
+	SAVECONTEXT
 
 	mov rdi, 2
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #3, BreakPoint ISR
-kISRBreakPoint:
-	KSAVECONTEXT
+ISRBreakPoint:
+	SAVECONTEXT
 
 	mov rdi, 3
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #4, Overflow ISR
-kISROverflow:
-	KSAVECONTEXT
+ISROverflow:
+	SAVECONTEXT
 
 	mov rdi, 4
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #5, Bound Range Exceeded ISR
-kISRBoundRangeExceeded:
-	KSAVECONTEXT
+ISRBoundRangeExceeded:
+	SAVECONTEXT
 
 	mov rdi, 5
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #6, Invalid Opcode ISR
-kISRInvalidOpcode:
-	KSAVECONTEXT
+ISRInvalidOpcode:
+	SAVECONTEXT
 
 	mov rdi, 6
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #7, Device Not Available ISR
-kISRDeviceNotAvailable:
-	KSAVECONTEXT
+ISRDeviceNotAvailable:
+	SAVECONTEXT
 
 	mov rdi, 7
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #8, Double Fault ISR
-kISRDoubleFault:
-	KSAVECONTEXT
+ISRDoubleFault:
+	SAVECONTEXT
 
 	mov rdi, 8
 	mov rsi, qword [ rbp + 8 ]
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	add rsp, 8
 	iretq
 
 ; #9, Coprocessor Segment Overrun ISR
-kISRCoprocessorSegmentOverrun:
-	KSAVECONTEXT
+ISRCoprocessorSegmentOverrun:
+	SAVECONTEXT
 
 	mov rdi, 9
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #10, Invalid TSS ISR
-kISRInvalidTSS:
-	KSAVECONTEXT
+ISRInvalidTSS:
+	SAVECONTEXT
 
 	mov rdi, 10
 	mov rsi, qword [ rbp + 8 ]
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	add rsp, 8
 	iretq
 
 ; #11, Segment Not Present ISR
-kISRSegmentNotPresent:
-	KSAVECONTEXT
+ISRSegmentNotPresent:
+	SAVECONTEXT
 
 	mov rdi, 11
 	mov rsi, qword [ rbp + 8 ]
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	add rsp, 8
 	iretq
 
 ; #12, Stack Segment Fault ISR
-kISRStackSegmentFault:
-	KSAVECONTEXT
+ISRStackSegmentFault:
+	SAVECONTEXT
 
 	mov rdi, 12
 	mov rsi, qword [ rbp + 8 ]
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	add rsp, 8
 	iretq
 
 ; #13, General Protection ISR
-kISRGeneralProtection:
-	KSAVECONTEXT
+ISRGeneralProtection:
+	SAVECONTEXT
 
 	mov rdi, 13
 	mov rsi, qword [ rbp + 8 ]
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	add rsp, 8
 	iretq
 
 ; #14, Page Fault ISR
-kISRPageFault:
-	KSAVECONTEXT
+ISRPageFault:
+	SAVECONTEXT
 
 	mov rdi, 14
 	mov rsi, qword [ rbp + 8 ]
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	add rsp, 8
 	iretq
 
 ; #15, Reserved ISR
-kISR15:
-	KSAVECONTEXT
+ISR15:
+	SAVECONTEXT
 
 	mov rdi, 15
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #16, FPU Error ISR
-kISRFPUError:
-	KSAVECONTEXT
+ISRFPUError:
+	SAVECONTEXT
 
 	mov rdi, 16
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #17, Alignment Check ISR
-kISRAlignmentCheck:
-	KSAVECONTEXT
+ISRAlignmentCheck:
+	SAVECONTEXT
 
 	mov rdi, 17
 	mov rsi, qword [rbp+8]
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	add rsp, 8
 	iretq
 
 ; #18, Machine Check ISR
-kISRMachineCheck:
-	KSAVECONTEXT
+ISRMachineCheck:
+	SAVECONTEXT
 
 	mov rdi, 18
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #19, SIMD Floating Point Exception ISR
-kISRSIMDError:
-	KSAVECONTEXT
+ISRSIMDError:
+	SAVECONTEXT
 
 	mov rdi, 19
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #20~#31, Reserved ISR
-kISRETCException:
-	KSAVECONTEXT
+ISRETCException:
+	SAVECONTEXT
 
 	mov rdi, 20
-	call kCommonExceptionHandler
+	call CommonExceptionHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 
@@ -316,173 +316,173 @@ kISRETCException:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; #32, Timer ISR
-kISRTimer:
-	KSAVECONTEXT
+ISRTimer:
+	SAVECONTEXT
 
 	mov rdi, 32
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #33, Keyboard ISR
-kISRKeyboard:
-	KSAVECONTEXT
+ISRKeyboard:
+	SAVECONTEXT
 
 	mov rdi, 33
-	call kKeyboardHandler
+	call KeyboardHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #34, Slave PIC ISR
-kISRSlavePIC:
-	KSAVECONTEXT
+ISRSlavePIC:
+	SAVECONTEXT
 
 	mov rdi, 34
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #35, Serial Port2 ISR
-kISRSerial2:
-	KSAVECONTEXT
+ISRSerial2:
+	SAVECONTEXT
 
 	mov rdi, 35
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #36, Serial Port1 ISR
-kISRSerial1:
-	KSAVECONTEXT
+ISRSerial1:
+	SAVECONTEXT
 
 	mov rdi, 36
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #37, Parallel Port2 ISR
-kISRParallel2:
-	KSAVECONTEXT
+ISRParallel2:
+	SAVECONTEXT
 
 	mov rdi, 37
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #38, Floppy Disk Controller ISR
-kISRFloppy:
-	KSAVECONTEXT
+ISRFloppy:
+	SAVECONTEXT
 
 	mov rdi, 38
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #39, Parallel Port1
-kISRParallel1:
-	KSAVECONTEXT
+ISRParallel1:
+	SAVECONTEXT
 
 	mov rdi, 39
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #40, RTC ISR
-kISRRTC:
-	KSAVECONTEXT
+ISRRTC:
+	SAVECONTEXT
 
 	mov rdi, 40
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #41, Reserved Interrupt ISR
-kISRReserved:
-	KSAVECONTEXT
+ISRReserved:
+	SAVECONTEXT
 
 	mov rdi, 41
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #42, NOT Used
-kISRNotUsed1:
-	KSAVECONTEXT
+ISRNotUsed1:
+	SAVECONTEXT
 
 	mov rdi, 42
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #43, NOT Used
-kISRNotUsed2:
-	KSAVECONTEXT
+ISRNotUsed2:
+	SAVECONTEXT
 
 	mov rdi, 43
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #44, Mouse ISR
-kISRMouse:
-	KSAVECONTEXT
+ISRMouse:
+	SAVECONTEXT
 
 	mov rdi, 44
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #45, Coprocessor ISR
-kISRCoprocessor:
-	KSAVECONTEXT
+ISRCoprocessor:
+	SAVECONTEXT
 
 	mov rdi, 45
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #46, HDD1 ISR
-kISRHDD1:
-	KSAVECONTEXT
+ISRHDD1:
+	SAVECONTEXT
 
 	mov rdi, 46
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #47, HDD2 ISR
-kISRHDD2:
-	KSAVECONTEXT
+ISRHDD2:
+	SAVECONTEXT
 
 	mov rdi, 47
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 ; #48 ETC
-kISRETCInterrupt:
-	KSAVECONTEXT
+ISRETCInterrupt:
+	SAVECONTEXT
 
 	mov rdi, 48
-	call kCommonInterruptHandler
+	call CommonInterruptHandler
 
-	KLOADCONTEXT
+	LOADCONTEXT
 	iretq
 
 

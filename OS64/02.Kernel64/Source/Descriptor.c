@@ -6,7 +6,7 @@
 ////////////////////////////////////////
 
 // Initialize GDT
-void kInitializeGDTTableAndTSS(void){
+void InitializeGDTTableAndTSS(void){
 	GDTR* pstGDTR;
 	GDTENTRY8* pstEntry;
 	TSSSEGMENT* pstTSS;
@@ -20,17 +20,17 @@ void kInitializeGDTTableAndTSS(void){
 	// Set TSS area
 	pstTSS = (TSSSEGMENT*) ( (QWORD)pstEntry + GDT_TABLESIZE );
 	//Create 4 segment for NULL, 64bit Code/Data, TSS
-	kSetGDTEntry8( &(pstEntry[0]), 0, 0, 0, 0, 0 );
-	kSetGDTEntry8( &(pstEntry[1]), 0, 0xFFFFF, GDT_FLAGS_UPPER_CODE, GDT_FLAGS_LOWER_KERNELCODE, GDT_TYPE_CODE );
-	kSetGDTEntry8( &(pstEntry[2]), 0, 0xFFFFF, GDT_FLAGS_UPPER_DATA, GDT_FLAGS_LOWER_KERNELDATA, GDT_TYPE_DATA );
-	kSetGDTEntry16( (GDTENTRY16*)&(pstEntry[3]), (QWORD)pstTSS, sizeof(TSSSEGMENT)-1, GDT_FLAGS_UPPER_TSS, GDT_FLAGS_LOWER_TSS, GDT_TYPE_TSS);
+	SetGDTEntry8( &(pstEntry[0]), 0, 0, 0, 0, 0 );
+	SetGDTEntry8( &(pstEntry[1]), 0, 0xFFFFF, GDT_FLAGS_UPPER_CODE, GDT_FLAGS_LOWER_KERNELCODE, GDT_TYPE_CODE );
+	SetGDTEntry8( &(pstEntry[2]), 0, 0xFFFFF, GDT_FLAGS_UPPER_DATA, GDT_FLAGS_LOWER_KERNELDATA, GDT_TYPE_DATA );
+	SetGDTEntry16( (GDTENTRY16*)&(pstEntry[3]), (QWORD)pstTSS, sizeof(TSSSEGMENT)-1, GDT_FLAGS_UPPER_TSS, GDT_FLAGS_LOWER_TSS, GDT_TYPE_TSS);
 
 	// Initialize TSS
-	kInitializeTSSSegment(pstTSS);
+	InitializeTSSSegment(pstTSS);
 }
 
 // Set 8byte GDT Entry for CODE/SEGMENT descriptor
-void kSetGDTEntry8(GDTENTRY8* pstEntry, DWORD dwBaseAddress, DWORD dwLimit, BYTE bUpperFlags, BYTE bLowerFlags, BYTE bType){
+void SetGDTEntry8(GDTENTRY8* pstEntry, DWORD dwBaseAddress, DWORD dwLimit, BYTE bUpperFlags, BYTE bLowerFlags, BYTE bType){
 	pstEntry->wLowerLimit = dwLimit & 0xFFFF;
 	pstEntry->wLowerBaseAddress = dwBaseAddress & 0xFFFF;
 	pstEntry->bUpperBaseAddress1 = (dwBaseAddress >> 16) & 0xFF;
@@ -40,7 +40,7 @@ void kSetGDTEntry8(GDTENTRY8* pstEntry, DWORD dwBaseAddress, DWORD dwLimit, BYTE
 }
 
 // Set 16byte GDT Entry for TSS descriptor
-void kSetGDTEntry16(GDTENTRY16* pstEntry, QWORD qwBaseAddress, DWORD dwLimit, BYTE bUpperFlags, BYTE bLowerFlags, BYTE bType){
+void SetGDTEntry16(GDTENTRY16* pstEntry, QWORD qwBaseAddress, DWORD dwLimit, BYTE bUpperFlags, BYTE bLowerFlags, BYTE bType){
 	pstEntry->wLowerLimit = dwLimit & 0xFFFF;
 	pstEntry->wLowerBaseAddress = qwBaseAddress & 0xFFFF;
 	pstEntry->bMiddleBaseAddress1 = (qwBaseAddress >> 16) & 0xFF;
@@ -52,8 +52,8 @@ void kSetGDTEntry16(GDTENTRY16* pstEntry, QWORD qwBaseAddress, DWORD dwLimit, BY
 }
 
 // Initialize TSS
-void kInitializeTSSSegment(TSSSEGMENT* pstTSS){
-	kMemSet(pstTSS, 0, sizeof(TSSSEGMENT));
+void InitializeTSSSegment(TSSSEGMENT* pstTSS){
+	MemSet(pstTSS, 0, sizeof(TSSSEGMENT));
 	pstTSS->qwIST[0] = IST_STARTADDRESS + IST_SIZE;
 	// IO Map: Not used
 	pstTSS->wIOMapBaseAddress = 0xFFFF;
@@ -64,7 +64,7 @@ void kInitializeTSSSegment(TSSSEGMENT* pstTSS){
 ////////////////////////////////////////
 
 //Initialize IDT
-void kInitializeIDTTables(void){
+void InitializeIDTTables(void){
 	IDTR* pstIDTR;
 	IDTENTRY* pstEntry;
 	int i;
@@ -77,67 +77,67 @@ void kInitializeIDTTables(void){
 	//================================================
 	// Exception ISR
 	//================================================
-	kSetIDTEntry( &(pstEntry[0]), kISRDivideError, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[1]), kISRDebug, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[2]), kISRNMI, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[3]), kISRBreakPoint, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[4]), kISROverflow, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[5]), kISRBoundRangeExceeded, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[6]), kISRInvalidOpcode, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[7]), kISRDeviceNotAvailable, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[8]), kISRDoubleFault, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[9]), kISRCoprocessorSegmentOverrun, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[10]), kISRInvalidTSS, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[11]), kISRSegmentNotPresent, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[12]), kISRStackSegmentFault, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[13]), kISRGeneralProtection, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[14]), kISRPageFault, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[15]), kISR15, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[16]), kISRFPUError, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[17]), kISRAlignmentCheck, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[18]), kISRMachineCheck, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[19]), kISRSIMDError, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
-	kSetIDTEntry( &(pstEntry[20]), kISRETCException, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[0]), ISRDivideError, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[1]), ISRDebug, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[2]), ISRNMI, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[3]), ISRBreakPoint, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[4]), ISROverflow, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[5]), ISRBoundRangeExceeded, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[6]), ISRInvalidOpcode, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[7]), ISRDeviceNotAvailable, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[8]), ISRDoubleFault, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[9]), ISRCoprocessorSegmentOverrun, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[10]), ISRInvalidTSS, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[11]), ISRSegmentNotPresent, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[12]), ISRStackSegmentFault, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[13]), ISRGeneralProtection, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[14]), ISRPageFault, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[15]), ISR15, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[16]), ISRFPUError, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[17]), ISRAlignmentCheck, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[18]), ISRMachineCheck, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[19]), ISRSIMDError, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+	SetIDTEntry( &(pstEntry[20]), ISRETCException, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
 
 	for(i=21; i<32; i++){
-		kSetIDTEntry( &(pstEntry[i]), kISRETCException, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+		SetIDTEntry( &(pstEntry[i]), ISRETCException, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
 	}
 
 
 	/*//Connect 0~99 vector to DummyHandler
 	for(i=0; i<IDT_MAXENTRYCOUNT; i++){
-		kSetIDTEntry(&(pstEntry[i]), kDummyHandler, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+		SetIDTEntry(&(pstEntry[i]), DummyHandler, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
 	}*/
 
 	//================================================
 	// Interrupt ISR
 	//================================================
-	kSetIDTEntry( &(pstEntry[32]), kISRTimer, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[33]), kISRKeyboard, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[34]), kISRSlavePIC, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[35]), kISRSerial2, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[36]), kISRSerial1, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[37]), kISRParallel2, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[38]), kISRFloppy, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[39]), kISRParallel1, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[40]), kISRRTC, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[41]), kISRReserved, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[42]), kISRNotUsed1, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[43]), kISRNotUsed2, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[44]), kISRMouse, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[45]), kISRCoprocessor, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[46]), kISRHDD1, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
-	kSetIDTEntry( &(pstEntry[47]), kISRHDD2, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[32]), ISRTimer, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[33]), ISRKeyboard, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[34]), ISRSlavePIC, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[35]), ISRSerial2, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[36]), ISRSerial1, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[37]), ISRParallel2, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[38]), ISRFloppy, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[39]), ISRParallel1, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[40]), ISRRTC, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[41]), ISRReserved, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[42]), ISRNotUsed1, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[43]), ISRNotUsed2, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[44]), ISRMouse, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[45]), ISRCoprocessor, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[46]), ISRHDD1, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	SetIDTEntry( &(pstEntry[47]), ISRHDD2, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
 
 	for(i=48; i<IDT_MAXENTRYCOUNT; i++){
-		kSetIDTEntry( &(pstEntry[i]), kISRETCInterrupt, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+		SetIDTEntry( &(pstEntry[i]), ISRETCInterrupt, 0x08, IDT_FLAGS_IST1, IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
 	}
 
 
 }
 
 //Set IDT Gate descriptor
-void kSetIDTEntry(IDTENTRY* pstEntry, void* pvHandler, WORD wSelector, BYTE bIST, BYTE bFlags, BYTE bType){
+void SetIDTEntry(IDTENTRY* pstEntry, void* pvHandler, WORD wSelector, BYTE bIST, BYTE bFlags, BYTE bType){
 	pstEntry->wLowerBaseAddress = (QWORD) pvHandler & 0xFFFF;
 	pstEntry->wSegmentSelector = wSelector;
 	pstEntry->bIST = bIST & 0x3;
@@ -149,11 +149,11 @@ void kSetIDTEntry(IDTENTRY* pstEntry, void* pvHandler, WORD wSelector, BYTE bIST
 
 /*
 //dummy
-void kDummyHandler(void){
-	kPrintString(0, 0, "=====================================================================");
-	kPrintString(0, 1, "                 Dummy Interrupt Handler Execute                     ");
-	kPrintString(0, 2, "                  Interrupt or Exception Occur                       ");
-	kPrintString(0, 3, "=====================================================================");
+void DummyHandler(void){
+	PrintString(0, 0, "=====================================================================");
+	PrintString(0, 1, "                 Dummy Interrupt Handler Execute                     ");
+	PrintString(0, 2, "                  Interrupt or Exception Occur                       ");
+	PrintString(0, 3, "=====================================================================");
 
 	while(1);
 }*/

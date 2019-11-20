@@ -2,14 +2,14 @@
 #include "AssemblyUtility.h"
 #include "Keyboard.h"
 #include "Queue.h"
-
+#include "Utility.h"
 
 // Return whether Data was received in output buffer
-BOOL kIsOutputBufferFull(void){
+BOOL IsOutputBufferFull(void){
 
 	//status register(port 0x64)
 	//If bit 0 set to 1, data exist (sent by keyboard)
-	if(kInPortByte(0x64) & 0x01 ){
+	if(InPortByte(0x64) & 0x01 ){
 		return TRUE;
 	}
 
@@ -17,16 +17,16 @@ BOOL kIsOutputBufferFull(void){
 }
 
 // Return whether data written by processor remains
-BOOL kIsInputBufferFull(void){
+BOOL IsInputBufferFull(void){
 	// If bit 1 set to 1, data exist (sent by processor)
-	if(kInPortByte(0x64) & 0x02 ){
+	if(InPortByte(0x64) & 0x02 ){
 		return TRUE;
 	}
 
 	return FALSE;
 }
 
-BOOL kWaitForACKAndPutOtherScanCode(void){
+BOOL WaitForACKAndPutOtherScanCode(void){
 	int i,j;
 	BYTE bData;
 	BOOL bResult = FALSE;
@@ -35,68 +35,68 @@ BOOL kWaitForACKAndPutOtherScanCode(void){
 	for(j=0; j<100; j++){
 		// Wait until 0xFFFF loop
 		for(i=0; i<0xFFFF; i++){
-			if(kIsOutputBufferFull() == TRUE){
+			if(IsOutputBufferFull() == TRUE){
 				break;
 			}
 		}
 		// Success If data read is 0xFA(ACK)
-		bData = kInPortByte(0x60);
+		bData = InPortByte(0x60);
 		if(bData == 0xFA){
 			bResult = TRUE;
 			break;
 		}
 		// If NOT ACK(0xFA), Convert to ASCII code
 		else{
-			kConvertScanCodeAndPutQueue(bData);
+			ConvertScanCodeAndPutQueue(bData);
 		}
 	}
 	return bResult;
 }
 
 // Activate keyboard
-BOOL kActivateKeyboard(void){
+BOOL ActivateKeyboard(void){
 
 	int i,j;
 	BOOL bPreviousInterrupt;
 	BOOL bResult;
 
 	// Disable Interrupt
-	bPreviousInterrupt = kSetInterruptFlag(FALSE);
+	bPreviousInterrupt = SetInterruptFlag(FALSE);
 
 	// Send keyboard activate command(0xAE) to control register
-	kOutPortByte(0x64, 0xAE);
+	OutPortByte(0x64, 0xAE);
 
 	// Wait until input buffer is empty
 	// If input buffer is NOT empty during 0xFFFF loop, ignore and send
 	for(i=0; i<0xFFFF; i++){
-		if( kIsInputBufferFull() == FALSE ){
+		if( IsInputBufferFull() == FALSE ){
 			break;
 		}
 	}
 	// Send activate command(0xF4) to keyboard
-	kOutPortByte(0x60, 0xF4);
+	OutPortByte(0x60, 0xF4);
 
 	//Wait for ACK
-	bResult = kWaitForACKAndPutOtherScanCode();
+	bResult = WaitForACKAndPutOtherScanCode();
 
 	// restore Previous Interrupt
-	kSetInterruptFlag(bPreviousInterrupt);
+	SetInterruptFlag(bPreviousInterrupt);
 	return bResult;
 }
 
 // Get key from output buffer
-BYTE kGetKeyboardScanCode(void){
+BYTE GetKeyboardScanCode(void){
 
 	// Wait until data exist
-	while(kIsOutputBufferFull() == FALSE){
+	while(IsOutputBufferFull() == FALSE){
 		;
 	}
 	// Get data from output buffer
-	return kInPortByte(0x60);
+	return InPortByte(0x60);
 }
 
 // Change LED status(ON/OFF)
-BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn ){
+BOOL ChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn ){
 
 	int i,j;
 	BOOL bPreviousInterrupt;
@@ -104,97 +104,97 @@ BOOL kChangeKeyboardLED(BOOL bCapsLockOn, BOOL bNumLockOn, BOOL bScrollLockOn ){
 	BYTE bData;
 
 	// Disable interrupt
-	bPreviousInterrupt = kSetInterruptFlag(FALSE);
+	bPreviousInterrupt = SetInterruptFlag(FALSE);
 
 	// Wait until input buffer is empty
 	for(i=0; i<0xFFFF; i++){
-		if(kIsInputBufferFull() == FALSE ){
+		if(IsInputBufferFull() == FALSE ){
 			break;
 		}
 	}
 	// Send LED status change command(0xED)
-	kOutPortByte(0x60, 0xED); // Input buffer
+	OutPortByte(0x60, 0xED); // Input buffer
 	for(i=0; i<0xFFFF; i++){
 		// If input buffer is empty, data was sent to keyboard
-		if(kIsInputBufferFull() == FALSE){
+		if(IsInputBufferFull() == FALSE){
 			break;
 		}
 	}
 
 	// Wait for ACK
-	bResult = kWaitForACKAndPutOtherScanCode();
+	bResult = WaitForACKAndPutOtherScanCode();
 
 
 	if(bResult == FALSE){
 		// Restore previous interrupt
-		kSetInterruptFlag(bPreviousInterrupt);
+		SetInterruptFlag(bPreviousInterrupt);
 		return FALSE;
 	}
 
 	// Send changed LED status to keyboard and wait
 	// bit 0 : Scroll Lock / bit 1 : Num Lock / bit 2 : Caps Lock
-	kOutPortByte( 0x60, (bCapsLockOn << 2) | (bNumLockOn << 1) | bScrollLockOn );
+	OutPortByte( 0x60, (bCapsLockOn << 2) | (bNumLockOn << 1) | bScrollLockOn );
 	for(i=0; i<0xFFFF; i++){
-		if(kIsInputBufferFull() == FALSE){
+		if(IsInputBufferFull() == FALSE){
 			break;
 		}
 	}
 
 	// Wait for ACK
-	bResult = kWaitForACKAndPutOtherScanCode();
+	bResult = WaitForACKAndPutOtherScanCode();
 	// Restore previous interrupt
-	kSetInterruptFlag(bPreviousInterrupt);
+	SetInterruptFlag(bPreviousInterrupt);
 	return bResult;
 
 }
 // Activate A20 Gate
-void kEnableA20Gate(void){
+void EnableA20Gate(void){
 
 	BYTE bOutputPortData;
 	int i;
 
 	// Send command(0xD0, read out port data of keyboard controller) to control register
-	kOutPortByte(0x64, 0xD0);
+	OutPortByte(0x64, 0xD0);
 
 
 	for(i=0; i<0xFFFF; i++){
-		if(kIsOutputBufferFull() == TRUE){
+		if(IsOutputBufferFull() == TRUE){
 			break;
 		}
 	}
 
 	// Read out port data
-	bOutputPortData = kInPortByte(0x60);
+	bOutputPortData = InPortByte(0x60);
 
 	// Set A20 gate bit
 	bOutputPortData |= 0x02;
 
 	for(i=0; i<0xFFFF; i++){
-		if(kIsInputBufferFull() == FALSE){
+		if(IsInputBufferFull() == FALSE){
 			break;
 		}
 	}
 
 	//Send 0xD1 command to control register
-	kOutPortByte(0x64, 0xD1);
+	OutPortByte(0x64, 0xD1);
 
 	// Send data with A20 Gate bit set to 1 to input buffer
-	kOutPortByte(0x60, bOutputPortData);
+	OutPortByte(0x60, bOutputPortData);
 }
 
 // Reset processor
-void kReboot(void){
+void Reboot(void){
 
 	int i;
 	for(i=0; i<0xFFFF; i++){
-		if(kIsInputBufferFull() == FALSE){
+		if(IsInputBufferFull() == FALSE){
 			break;
 		}
 	}
 
-	kOutPortByte(0x64, 0xD1);
+	OutPortByte(0x64, 0xD1);
 
-	kOutPortByte(0x60, 0x00);
+	OutPortByte(0x60, 0x00);
 
 	while(1){
 		;
@@ -305,7 +305,7 @@ static KEYMAPPINGENTRY gs_vstKeyMappingTable[ KEY_MAPPINGTABLEMAXCOUNT ] ={
 };
 
 // return whether Alphabet
-BOOL kIsAlphabetScanCode(BYTE bScanCode){
+BOOL IsAlphabetScanCode(BYTE bScanCode){
 
 	if( ('a'<=gs_vstKeyMappingTable[bScanCode].bNormalCode) &&
 		(gs_vstKeyMappingTable[bScanCode].bNormalCode <= 'z') ){
@@ -316,16 +316,16 @@ BOOL kIsAlphabetScanCode(BYTE bScanCode){
 }
 
 // return whether number or symbol
-BOOL kIsNumberOrSymbolScanCode(BYTE bScanCode){
+BOOL IsNumberOrSymbolScanCode(BYTE bScanCode){
 	// NOT extended key(2~53) and NOT alphabet
-	if((2 <= bScanCode) && (bScanCode <= 53) && (kIsAlphabetScanCode(bScanCode) == FALSE)){
+	if((2 <= bScanCode) && (bScanCode <= 53) && (IsAlphabetScanCode(bScanCode) == FALSE)){
 		return TRUE;
 	}
 
 	return FALSE;
 }
 
-BOOL kIsNumberPadScanCode(BYTE bScanCode){
+BOOL IsNumberPadScanCode(BYTE bScanCode){
 	if((71 <= bScanCode) && (bScanCode <= 83)){
 		return TRUE;
 	}
@@ -333,14 +333,14 @@ BOOL kIsNumberPadScanCode(BYTE bScanCode){
 	return FALSE;
 }
 
-BOOL kIsUseCombinedCode(BYTE bScanCode){
+BOOL IsUseCombinedCode(BYTE bScanCode){
 	BYTE bDownScanCode;
 	BOOL bUseCombinedKey = FALSE;
 
 	bDownScanCode = bScanCode & 0x7f;
 
 
-	if(kIsAlphabetScanCode(bDownScanCode) == TRUE){
+	if(IsAlphabetScanCode(bDownScanCode) == TRUE){
 		// Shift down OR CapsLock on, return Combined key
 		if(gs_stKeyboardManager.bShiftDown ^ gs_stKeyboardManager.bCapsLockOn){
 			bUseCombinedKey = TRUE;
@@ -350,7 +350,7 @@ BOOL kIsUseCombinedCode(BYTE bScanCode){
 		}
 	}
 
-	else if(kIsNumberOrSymbolScanCode(bDownScanCode) == TRUE){
+	else if(IsNumberOrSymbolScanCode(bDownScanCode) == TRUE){
 		if(gs_stKeyboardManager.bShiftDown == TRUE ){
 			bUseCombinedKey = TRUE;
 		}
@@ -359,7 +359,7 @@ BOOL kIsUseCombinedCode(BYTE bScanCode){
 		}
 	}
 
-	else if((kIsNumberPadScanCode(bDownScanCode) == TRUE) &&
+	else if((IsNumberPadScanCode(bDownScanCode) == TRUE) &&
 			(gs_stKeyboardManager.bExtendedCodeIn == FALSE)){
 
 		if(gs_stKeyboardManager.bNumLockOn == TRUE){
@@ -407,12 +407,12 @@ void UpdateCombinationKeyStatusAndLED(BYTE bScanCode){
 	}
 
 	if(bLEDStatusChanged == TRUE){
-		kChangeKeyboardLED(gs_stKeyboardManager.bCapsLockOn,
+		ChangeKeyboardLED(gs_stKeyboardManager.bCapsLockOn,
 			gs_stKeyboardManager.bNumLockOn,gs_stKeyboardManager.bScrollLockOn);
 	}
 }
 
-BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlags){
+BOOL ConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlags){
 
 	BOOL bUseCombinedKey;
 
@@ -432,7 +432,7 @@ BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlag
 		return FALSE;
 	}
 
-	bUseCombinedKey = kIsUseCombinedCode(bScanCode);
+	bUseCombinedKey = IsUseCombinedCode(bScanCode);
 
 	if(bUseCombinedKey == TRUE){
 		*pbASCIICode = gs_vstKeyMappingTable[bScanCode & 0x7F].bCombinedCode;
@@ -458,13 +458,13 @@ BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlag
 	return TRUE;
 }
 
-BOOL kInitializeKeyboard(void){
-	kInitializeQueue(&gs_stKeyQueue, gs_vstKeyQueueBuffer, KEY_MAXQUEUECOUNT, sizeof(KEYDATA));
+BOOL InitializeKeyboard(void){
+	InitializeQueue(&gs_stKeyQueue, gs_vstKeyQueueBuffer, KEY_MAXQUEUECOUNT, sizeof(KEYDATA));
 
-	return kActivateKeyboard();
+	return ActivateKeyboard();
 }
 
-BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode){
+BOOL ConvertScanCodeAndPutQueue(BYTE bScanCode){
 	KEYDATA stData;
 	BOOL bResult = FALSE;
 	BOOL bPreviousInterrupt;
@@ -473,15 +473,15 @@ BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode){
 	stData.bScanCode = bScanCode;
 
 	// Convert scan code to ASCII code
-	if(kConvertScanCodeToASCIICode(bScanCode, &(stData.bASCIICode), &(stData.bFlags)) == TRUE){
+	if(ConvertScanCodeToASCIICode(bScanCode, &(stData.bASCIICode), &(stData.bFlags)) == TRUE){
 		// Interrupt disable
-		bPreviousInterrupt = kSetInterruptFlag(FALSE);
+		bPreviousInterrupt = SetInterruptFlag(FALSE);
 
 		// Insert key data
-		bResult = kPutQueue(&gs_stKeyQueue, &stData);
+		bResult = PutQueue(&gs_stKeyQueue, &stData);
 
 		// Restore interrupt flag
-		kSetInterruptFlag(bPreviousInterrupt);
+		SetInterruptFlag(bPreviousInterrupt);
 	}
 
 	return bResult;
@@ -489,23 +489,23 @@ BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode){
 
 
 
-BOOL kGetKeyFromKeyQueue(KEYDATA* pstData){
+BOOL GetKeyFromKeyQueue(KEYDATA* pstData){
 	BOOL bResult;
 	BOOL bPreviousInterrupt;
 
 	// If Queue is empty, Do not get key data
-	if(kIsQueueEmpty(&gs_stKeyQueue) == TRUE){
+	if(IsQueueEmpty(&gs_stKeyQueue) == TRUE){
 		return FALSE;
 	}
 
 	// Interrupt disable
-	bPreviousInterrupt = kSetInterruptFlag(FALSE);
+	bPreviousInterrupt = SetInterruptFlag(FALSE);
 
 	// Get key data(In Queue, remove data)
-	bResult = kGetQueue(&gs_stKeyQueue, pstData);
+	bResult = GetQueue(&gs_stKeyQueue, pstData);
 
 	// Restore interrupt flag
-	kSetInterruptFlag(bPreviousInterrupt);
+	SetInterruptFlag(bPreviousInterrupt);
 	return bResult;
 }
 

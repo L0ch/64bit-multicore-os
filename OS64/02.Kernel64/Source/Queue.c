@@ -1,7 +1,8 @@
 #include "Queue.h"
+#include "Utility.h"
 
 // Initialize Queue
-void kInitializeQueue(QUEUE* pstQueue, void* pvQueueBuffer, int iMaxDataCount, int iDataSize){
+void InitializeQueue(QUEUE* pstQueue, void* pvQueueBuffer, int iMaxDataCount, int iDataSize){
 	// Save Max Queue index/buffer address
 	pstQueue->iMaxDataCount = iMaxDataCount;
 	pstQueue->iDataSize = iDataSize;
@@ -14,7 +15,7 @@ void kInitializeQueue(QUEUE* pstQueue, void* pvQueueBuffer, int iMaxDataCount, i
 }
 
 // Return is Queue full
-BOOL kIsQueueFull(const QUEUE*pstQueue){
+BOOL IsQueueFull(const QUEUE*pstQueue){
 	if((pstQueue->iGetIndex == pstQueue->iPutIndex) && (pstQueue->bLastOperationPut == TRUE)){
 		return TRUE;
 	}
@@ -22,7 +23,7 @@ BOOL kIsQueueFull(const QUEUE*pstQueue){
 }
 
 // Return is Queue empty
-BOOL kIsQueueEmpty(const QUEUE* pstQueue){
+BOOL IsQueueEmpty(const QUEUE* pstQueue){
 	if((pstQueue->iGetIndex == pstQueue->iPutIndex) && (pstQueue->bLastOperationPut == FALSE)){
 		return TRUE;
 	}
@@ -30,13 +31,13 @@ BOOL kIsQueueEmpty(const QUEUE* pstQueue){
 }
 
 // Insert Queue
-BOOL kPutQueue(QUEUE* pstQueue, const void* pvData){
+BOOL PutQueue(QUEUE* pstQueue, const void* pvData){
 	// If Queue is full, Do not Insert
-	if(kIsQueueFull(pstQueue) == TRUE){
+	if(IsQueueFull(pstQueue) == TRUE){
 		return FALSE;
 	}
 	// Copy
-	kMemCpy((char*)pstQueue->pvQueueArray + (pstQueue->iDataSize*pstQueue->iPutIndex), pvData, pstQueue->iDataSize);
+	MemCpy((char*)pstQueue->pvQueueArray + (pstQueue->iDataSize*pstQueue->iPutIndex), pvData, pstQueue->iDataSize);
 
 	// Increase insert index, if over than max index of queue, reset to 0
 	pstQueue->iPutIndex = (pstQueue->iPutIndex+1) % pstQueue->iMaxDataCount;
@@ -47,12 +48,12 @@ BOOL kPutQueue(QUEUE* pstQueue, const void* pvData){
 }
 
 // Remove Queue
-BOOL kGetQueue(QUEUE* pstQueue, const void* pvData){
-	if(kIsQueueEmpty(pstQueue) == TRUE){
+BOOL GetQueue(QUEUE* pstQueue, void* pvData){
+	if(IsQueueEmpty(pstQueue) == TRUE){
 		return FALSE;
 	}
 	// Copy
-	kMemCpy(pvData, (char*)pstQueue->pvQueueArray + (pstQueue->iDataSize*pstQueue->iGetIndex), pstQueue->iDataSize);
+	MemCpy(pvData, (char*)pstQueue->pvQueueArray + (pstQueue->iDataSize*pstQueue->iGetIndex), pstQueue->iDataSize);
 	// Increase remove index, if over than max index of queue, reset to 0
 	pstQueue->iGetIndex = (pstQueue->iGetIndex+1) % pstQueue->iMaxDataCount;
 	//Save last operation

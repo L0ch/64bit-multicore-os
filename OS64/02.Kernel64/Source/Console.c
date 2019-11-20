@@ -1,6 +1,9 @@
 #include <stdarg.h>
 #include "Console.h"
 #include "Keyboard.h"
+#include "AssemblyUtility.h"
+#include "Utility.h"
+
 
 // Structure for management console info
 CONSOLEMANAGER gs_stConsoleManager = {0, };
@@ -8,7 +11,7 @@ CONSOLEMANAGER gs_stConsoleManager = {0, };
 
 void InitializeConsole(int X, int Y){
 	// Initialize
-	kMemSet(&gs_stConsoleManager, 0, sizeof(gs_stConsoleManager));
+	MemSet(&gs_stConsoleManager, 0, sizeof(gs_stConsoleManager));
 
 	SetCursor(X,Y);
 }
@@ -23,11 +26,11 @@ void SetCursor(int X, int Y){
 
 	// Send 0x0E/0x0F to CRTC control address register(port 0x3D4)
 	// Send upper/lower byte of cursor to CRTC,
-	kOutPortByte(VGA_PORT_INDEX, VGA_INDEX_UPPERCURSOR);
-	kOutPortByte(VGA_PORT_DATA, LinearValue >> 8);
+	OutPortByte(VGA_PORT_INDEX, VGA_INDEX_UPPERCURSOR);
+	OutPortByte(VGA_PORT_DATA, LinearValue >> 8);
 
-	kOutPortByte(VGA_PORT_INDEX, VGA_INDEX_LOWERCURSOR);
-	kOutPortByte(VGA_PORT_DATA, LinearValue & 0xFF);
+	OutPortByte(VGA_PORT_INDEX, VGA_INDEX_LOWERCURSOR);
+	OutPortByte(VGA_PORT_DATA, LinearValue & 0xFF);
 
 	// Update next char position
 	gs_stConsoleManager.CurrentPrintOffset = LinearValue;
@@ -92,7 +95,7 @@ int ConsolePrintString(const char* pcBuffer){
 			// Copy up one line line 2 ~
 			// src = video memory + width*char -> line 2
 			// size = line 2 ~ end line
-			kMemCpy(CONSOLE_VIDEOMEMORYADDRESS, CONSOLE_VIDEOMEMORYADDRESS + CONSOLE_WIDTH*sizeof(CHARACTER),
+			MemCpy((void*)CONSOLE_VIDEOMEMORYADDRESS, (void*)CONSOLE_VIDEOMEMORYADDRESS + CONSOLE_WIDTH*sizeof(CHARACTER),
 					(CONSOLE_HEIGHT -1)* CONSOLE_WIDTH * sizeof(CHARACTER));
 			// Fill with blank
 			for (j = (CONSOLE_HEIGHT -1) * CONSOLE_WIDTH ; j<(CONSOLE_HEIGHT * CONSOLE_WIDTH); j++){
@@ -128,7 +131,7 @@ BYTE GetCh(void){
 	KEYDATA stData;
 
 	while(1){
-		while(kGetKeyFromKeyQueue(&stData) == FALSE){
+		while(GetKeyFromKeyQueue(&stData) == FALSE){
 			;
 		}
 
