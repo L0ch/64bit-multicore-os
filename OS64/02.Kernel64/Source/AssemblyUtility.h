@@ -11,5 +11,5 @@ void LoadIDTR(QWORD qwIDTRAddress);
 void EnableInterrupt(void);
 void DisableInterrupt(void);
 QWORD ReadRFLAGS(void);
-
+QWORD ReadTSC(void);
 #endif /*__ASSEMBLYUTILITY_H__*/

@@ -4,6 +4,7 @@ SECTION .text
 
 global InPortByte, OutPortByte, LoadGDTR, LoadTR, LoadIDTR
 global EnableInterrupt, DisableInterrupt, ReadRFLAGS
+global ReadTSC
 
 ; Read 1byte from port
 InPortByte:
@@ -64,6 +65,17 @@ ReadRFLAGS:
 	ret			; return RFLAGS
 
 
+; Return time stamp counter
+ReadTSC:
+	push rdx
+
+	rdtsc		; read time stamp counter and store to RDX:RAX
+
+	shl rdx, 32	; Upper rdx 32bit | Lower rax 32bit
+	or rax, rdx
+
+	pop rdx
+	ret
 
 
 
