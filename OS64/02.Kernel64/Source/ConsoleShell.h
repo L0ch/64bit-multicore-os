@@ -35,5 +35,11 @@ void Clear(const char* pcParameterBuffer);
 void ShowTotalMemorySize(const char* pcParameterBuffer);
 void StringToDecimalHex(const char* pcParameterBuffer);
 void Shutdown(const char* pcParameterBuffer);
+void SetTimer(const char* pcParameterBuffer);
+void WaitUsingPIT(const char* pcParameterBuffer);
+void ReadTimeStampCounter(const char* pcParameterBuffer);
+void MeasureProcessorSpeed(const char* pcParameterBuffer);
+void ShowDateAndTime(const char* pcParameterBuffer);
+
 
 #endif /*__CONSOLESHELL_H__*/

@@ -2,7 +2,9 @@
 #include "Console.h"
 #include "Keyboard.h"
 #include "Utility.h"
-
+#include "PIT.h"
+#include "RTC.h"
+#include "AssemblyUtility.h"
 
 SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"help", "Show Help", Help},
@@ -10,6 +12,11 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"free", "Show Total Memory Size", ShowTotalMemorySize},
 		{"strtod","String To Decimal/Hex Convert", StringToDecimalHex},
 		{"shutdown", "Shutdown And Reboot OS", Shutdown},
+		{"settimer", "Set PIT Controller Counter0", SetTimer},
+		{"wait", "Wait ms Using PIT", WaitUsingPIT},
+		{"rdtsc", "Read Time Stamp Counter", ReadTimeStampCounter},
+		{"cpu", "Measure Processor Speed", MeasureProcessorSpeed},
+		{"date", "Show Date And Time", ShowDateAndTime},
 };
 
 
@@ -218,6 +225,122 @@ void Shutdown(const char* pcParameterBuffer){
 	Printf("Press Any Key To Reboot...");
 	GetCh();
 	Reboot();
+}
+
+
+void SetTimer(const char* pcParameterBuffer){
+	char vcParameter[100];
+	PARAMETERLIST stList;
+	long lMillisecond;
+	BOOL bPeriodic;
+
+	InitializeParameter(&stList, pcParameterBuffer);
+
+	// Parameter1 not exist
+	if(GetNextParameter(&stList, vcParameter) == 0){
+		Printf("USAGE : settimer 10(ms) 1(periodic)\n");
+		return ;
+	}
+
+	// Millisecond
+	lMillisecond = AToI(vcParameter, 10);
+
+	// Parameter2 not exist
+	if(GetNextParameter(&stList, vcParameter) == 0){
+		Printf("USAGE : settimer 10(ms) 1(periodic)\n");
+		return ;
+	}
+	// Periodic
+	bPeriodic = AToI(vcParameter, 10);
+
+	// Process
+	InitializePIT(MSTOCOUNT(lMillisecond), bPeriodic);
+	Printf("Time = %d ms, Periodic = %d Change Complete\n", lMillisecond, bPeriodic);
+
+}
+
+void WaitUsingPIT(const char* pcParameterBuffer){
+	char vcParameter[100];
+	int iLength;
+	PARAMETERLIST stList;
+	long lMillisecond;
+	int i;
+
+	InitializeParameter(&stList, pcParameterBuffer);
+
+	if(GetNextParameter(&stList, vcParameter) == 0){
+		Printf("USAGE : wait 100(ms)\n");
+		return ;
+	}
+
+	lMillisecond = AToI(vcParameter, 10);
+	Printf("%d ms Sleep Start...\n", lMillisecond);
+
+
+	DisableInterrupt();
+	for(i = 0; i < lMillisecond / 30; i++){
+		WaitUsingDirectPIT(MSTOCOUNT(30));
+
+	}
+	WaitUsingDirectPIT(MSTOCOUNT(lMillisecond % 30));
+	EnableInterrupt();
+
+	Printf("%d ms Sleep Complete\n", lMillisecond);
+
+	//Restore timer
+	InitializePIT(MSTOCOUNT(1), TRUE);
+
+}
+
+
+void ReadTimeStampCounter(const char* pcParameterBuffer){
+	QWORD qwTSC;
+
+	qwTSC = ReadTSC();
+	Printf("Time Stamp Counter = %d\n", qwTSC);
+}
+
+// Measure processor performance
+void MeasureProcessorSpeed(const char* pcParameterBuffer){
+	int i;
+	QWORD qwLastTSC, qwTotalTSC = 0;
+
+	Printf("Now Measuring Processor performance ");
+
+	// Measure processor speed using difference of time stamp counter during 10s
+	DisableInterrupt();
+	for(i = 0; i < 200; i++){
+		qwLastTSC = ReadTSC();
+		WaitUsingDirectPIT(MSTOCOUNT(50)); // 50ms * 200
+		qwTotalTSC += ReadTSC() - qwLastTSC;
+		if(i%5 == 0){
+			Printf(".");
+		}
+	}
+
+	// Restore Timer
+	InitializePIT(MSTOCOUNT(1), TRUE);
+	EnableInterrupt();
+
+	Printf("\nCPU Speed = %d MHz\n", qwTotalTSC / 10 / 1000 / 1000);
+}
+
+
+// Show Date/Time Information stored RTC controller
+void ShowDateAndTime(const char* pcParameterBuffer){
+	BYTE bSecond, bMinute, bHour;
+	BYTE bDayOfWeek, bDayOfMonth, bMonth;
+	WORD wYear;
+
+	// Read Date/Time from RTC controller
+	ReadRTCTime(&bHour, &bMinute, &bSecond);
+	ReadRTCDate(&wYear, &bMonth, &bDayOfMonth, &bDayOfWeek);
+
+	Printf("%d/%d/%d %s, ", wYear, bMonth, bDayOfMonth, ConvertDayOfWeekToString(bDayOfWeek));
+	Printf(" %d:%d:%d\n", bHour, bMinute, bSecond);
+
+
+
 }
 
 
