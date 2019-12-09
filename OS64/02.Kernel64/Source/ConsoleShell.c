@@ -17,6 +17,7 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"rdtsc", "Read Time Stamp Counter", ReadTimeStampCounter},
 		{"cpu", "Measure Processor Speed", MeasureProcessorSpeed},
 		{"date", "Show Date And Time", ShowDateAndTime},
+		{"createtask", "Create Task", CreateTestTask},
 };
 
 
@@ -343,6 +344,37 @@ void ShowDateAndTime(const char* pcParameterBuffer){
 
 }
 
+
+static TCB gs_vstTask[2] = {0, };
+static QWORD gs_vstStack[1024] = {0, };
+void TestTask(void){
+	int i = 0;
+
+	while(1){
+		Printf("[%d] This message is from TestTask. Press any key to switch ConsoleShell\n", i++);
+		GetCh();
+
+		SwitchContext(&(gs_vstTask[1].stContext), &(gs_vstTask[0].stContext));
+
+	}
+}
+
+void CreateTestTask(const char* pcParameterBuffer){
+	KEYDATA stData;
+	int i = 0;
+
+	SetUpTask(&(gs_vstTask[1]), 1, 0, (QWORD)TestTask, &(gs_vstStack), sizeof(gs_vstStack));
+
+	while(1){
+		Printf("[%d] This message is from ConsoleShell. Press any key to sitch TestTask\n", i++);
+		Printf("Press q If want exit Task test\n");
+		if(GetCh() == 'q'){
+			break;
+		}
+
+		SwitchContext(&(gs_vstTask[0].stContext), &(gs_vstTask[1].stContext));
+	}
+}
 
 
 

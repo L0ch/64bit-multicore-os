@@ -40,6 +40,7 @@ void WaitUsingPIT(const char* pcParameterBuffer);
 void ReadTimeStampCounter(const char* pcParameterBuffer);
 void MeasureProcessorSpeed(const char* pcParameterBuffer);
 void ShowDateAndTime(const char* pcParameterBuffer);
-
+void CreateTestTask(const char* pcParameterBuffer);
+void TestTask(void);
 
 #endif /*__CONSOLESHELL_H__*/
