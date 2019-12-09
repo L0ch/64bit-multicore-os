@@ -2,7 +2,7 @@ all : ImageMaker
 
 ImageMaker: 00.ImageMaker/ImageMaker.c
 		gcc -o $@ $<
-		cp $@ ../../
+		cp $@ ../
 	
 clean:
 	rm -f ImageMaker
