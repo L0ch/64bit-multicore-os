@@ -18,6 +18,7 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"cpu", "Measure Processor Speed", MeasureProcessorSpeed},
 		{"date", "Show Date And Time", ShowDateAndTime},
 		{"createtask", "Create Task", CreateTestTask},
+		{"echo", "Print parameter", Echo},
 };
 
 
@@ -115,7 +116,7 @@ int GetNextParameter(PARAMETERLIST* pstList, char* pcParameter){
 	int i;
 	int Length;
 
-	// Exit no parameter
+	// Parameter does not exist
 	if(pstList->Length <= pstList->CurrentPosition){
 		return 0;
 	}
@@ -193,10 +194,10 @@ void StringToDecimalHex(const char* pcParameterBuffer){
 	while(1){
 		iLength = GetNextParameter(&stList, vcParameter);
 
-		// Parameter not exist
+		// Parameter does not exist
 		if(iLength == 0){
 
-			if(iCount == 1){
+			if(iCount == 0){
 				Printf("There is No Parameter\n");
 				Printf("Usage: strtod [DECIMAL/HEXADECIMAL]...\n");
 			}
@@ -376,7 +377,31 @@ void CreateTestTask(const char* pcParameterBuffer){
 	}
 }
 
+void Echo(const char* pcParameterBuffer){
+	char vcParameter[100];
+	PARAMETERLIST stList;
+	BOOL bAppendNewLine = TRUE;
+	int iLength;
+	InitializeParameter(&stList, pcParameterBuffer);
 
+
+
+	// Do not append newline
+	iLength = GetNextParameter(&stList, vcParameter);
+	if(MemCmp(vcParameter, "-n", 2) == 0){
+		bAppendNewLine = FALSE;
+		Printf("%s",pcParameterBuffer+iLength);
+	}
+	else{
+		Printf("%s",pcParameterBuffer);
+	}
+
+	if(bAppendNewLine){
+		Printf("\n");
+	}
+
+
+}
 
 
 

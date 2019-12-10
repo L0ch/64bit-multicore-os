@@ -29,7 +29,10 @@ void StartConsoleShell(void);
 void ExecuteCommand(const char* pcCommandBuffer);
 void InitializeParameter(PARAMETERLIST* pstList, const char* pcParameter);
 int GetNextParameter(PARAMETERLIST* pstList, char* pcParameter);
+void TestTask(void);
 
+
+// Shell command function
 void Help(const char* pcParameterBuffer);
 void Clear(const char* pcParameterBuffer);
 void ShowTotalMemorySize(const char* pcParameterBuffer);
@@ -41,6 +44,6 @@ void ReadTimeStampCounter(const char* pcParameterBuffer);
 void MeasureProcessorSpeed(const char* pcParameterBuffer);
 void ShowDateAndTime(const char* pcParameterBuffer);
 void CreateTestTask(const char* pcParameterBuffer);
-void TestTask(void);
+void Echo(const char* pcParameterBuffer);
 
 #endif /*__CONSOLESHELL_H__*/
