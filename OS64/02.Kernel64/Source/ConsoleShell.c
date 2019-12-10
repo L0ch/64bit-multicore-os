@@ -27,7 +27,7 @@ void StartConsoleShell(void){
 	int CommandBufferIndex = 0;
 	BYTE bKey;
 	int CursorX, CursorY;
-	Printf(CONSOLESHELL_PROMPTMESSAGE);
+	PrintPrompt(CONSOLESHELL_PROMPTMESSAGE);
 
 	while(1){
 		bKey = GetCh();
@@ -49,7 +49,7 @@ void StartConsoleShell(void){
 					ExecuteCommand(vcCommandBuffer);
 			}
 
-			Printf("%s", CONSOLESHELL_PROMPTMESSAGE);
+			PrintPrompt(CONSOLESHELL_PROMPTMESSAGE);
 			MemSet(vcCommandBuffer, '\0', CONSOLESHELL_MAXCOMMANDBUFFERCOUNT);
 			CommandBufferIndex = 0;
 		}

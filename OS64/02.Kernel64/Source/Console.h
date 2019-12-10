@@ -35,7 +35,7 @@
 
 // Default text color
 #define CONSOLE_DEFAULTTEXTCOLOR			(CONSOLE_BACKGROUND_BLACK | CONSOLE_FOREGROUND_BRIGHTWHITE)
-
+#define CONSOLE_PROMPTCOLOR					(CONSOLE_BACKGROUND_BLACK | CONSOLE_FOREGROUND_BRIGHTGREEN)
 #define CONSOLE_WIDTH				80
 #define CONSOLE_HEIGHT				25
 #define CONSOLE_VIDEOMEMORYADDRESS	0xB8000
@@ -64,6 +64,6 @@ int ConsolePrintString(const char* pcBuffer);
 void ClearScreen(void);
 BYTE GetCh(void);
 void PrintStringXY(int X, int Y, const char* pcString);
-
+void PrintPrompt(const char* pcBuffer);
 
 #endif /*__CONSOLE_H__*/

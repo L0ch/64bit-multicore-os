@@ -141,6 +141,8 @@ BYTE GetCh(void){
 	}
 }
 
+
+
 // Print string
 void PrintStringXY(int X, int Y, const char* pcString){
 	CHARACTER* pstScreen = (CHARACTER*) CONSOLE_VIDEOMEMORYADDRESS;
@@ -152,6 +154,42 @@ void PrintStringXY(int X, int Y, const char* pcString){
 	}
 }
 
+
+void PrintPrompt(const char* pcBuffer){
+	CHARACTER* pstScreen = (CHARACTER*) CONSOLE_VIDEOMEMORYADDRESS;
+	int i,j;
+	int Length;
+	int PrintOffset;
+
+	PrintOffset = gs_stConsoleManager.CurrentPrintOffset;
+
+	Length = StrLen(pcBuffer);
+	for(i=0; i<Length; i++){
+		// Set char/attribute to video memory -> print
+		// Move next to print position
+		pstScreen[PrintOffset].bCharactor = pcBuffer[i];
+		pstScreen[PrintOffset].bAttribute = CONSOLE_PROMPTCOLOR;
+		PrintOffset++;
+
+		// Scroll process
+		if(PrintOffset >= (CONSOLE_HEIGHT * CONSOLE_WIDTH)){
+			// Copy up one line line 2 ~
+			// src = video memory + width*char -> line 2
+			// size = line 2 ~ end line
+			MemCpy((void*)CONSOLE_VIDEOMEMORYADDRESS, (void*)CONSOLE_VIDEOMEMORYADDRESS + CONSOLE_WIDTH*sizeof(CHARACTER),
+					(CONSOLE_HEIGHT -1)* CONSOLE_WIDTH * sizeof(CHARACTER));
+			// Fill with blank
+			for (j = (CONSOLE_HEIGHT -1) * CONSOLE_WIDTH ; j<(CONSOLE_HEIGHT * CONSOLE_WIDTH); j++){
+				pstScreen[j].bCharactor = ' ';
+				pstScreen[j].bAttribute = CONSOLE_DEFAULTTEXTCOLOR;
+			}
+			// Set next print position
+			PrintOffset = (CONSOLE_HEIGHT -1) * CONSOLE_WIDTH;
+		}
+	}
+
+	SetCursor(PrintOffset % CONSOLE_WIDTH, PrintOffset / CONSOLE_WIDTH);
+}
 
 
 
