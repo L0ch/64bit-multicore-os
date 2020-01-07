@@ -2,6 +2,7 @@
 #define __TASK_H__
 
 #include "Types.h"
+#include "List.h"
 
 // Macro
 // SS, RSP, RFLAGS, CS, RIP, 19 register
@@ -34,6 +35,17 @@
 #define TASK_RSPOFFSET		22
 #define TASK_SSOFFSET		23
 
+// TCB pool address - after 8MB (size < 1MB)
+#define TASK_TCBPOOLADDRESS		0x800000
+#define TASK_MAXCOUNT			1024
+
+// Stack pool address - after 8MB + TCB size * TASK_MAXCOUNT (size = TASK_MAXCOUNT * 8KB)
+#define TASK_STACKPOOLADDRESS	(TASK_TCBPOOLADDRESS + sizeof(TCB) * TASK_MAXCOUNT)
+#define TASK_STACKSIZE			8192
+#define TASK_INVALIDID			0xFFFFFFFFFFFFFFFF
+// Maximum processor time task can use
+#define TASK_PROCESSORTIME		5
+
 // Structure
 #pragma pack(push, 1)
 
@@ -45,24 +57,75 @@ typedef struct ContextStruct{
 
 // Control task status
 typedef struct TaskControlBlockStruct{
+	// Next Node
+	LINKEDLIST stLink;
+
+	// Flag
+	QWORD qwFlags;
+
 	// Context
 	CONTEXT stContext;
 
-	// ID/Flags
-	QWORD qwID;
-	QWORD qwFlags;
+
+	//QWORD qwID;
+	//QWORD qwFlags;
 
 	// Address/Size of stack
 	void* pvStackAddress;
 	QWORD qwStackSize;
 } TCB;
 
+// Task pool status manager structure
+typedef struct TCBPoolManagerStruct{
+	// Task pool info
+	TCB* pstStartAddress;
+	int iMaxCount;
+	int iUseCount;
+
+	// TCB allocated count
+	int iAllocatedCount;
+} TCBPOOLMANAGER;
+
+// Scheduler status manager structure
+typedef struct SchedulerStruct{
+	// Running Task
+	TCB* pstRunningTask;
+	// Processor time task can use
+	int iProcessorTime;
+	// Task list ready to run
+	LIST stReadyList;
+
+} SCHEDULER;
+
+
 #pragma pack(pop)
 
 
 
+
 // Function
-void SetUpTask(TCB* pstTCB, QWORD qwID, QWORD qwFlags, QWORD qwEntryPointAddress, void* pvStackAddress, QWORD qwStackSize);
+//=================================
+//  Task pool / Task
+//=================================
+void InitializeTCBPool(void);
+TCB* AllocateTCB(void);
+void FreeTCB(QWORD qwID);
+TCB* CreateTask(QWORD qwFlags, QWORD qwEntryPointAddress);
+void SetUpTask(TCB* pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress, void* pvStackAddress, QWORD qwStackSize);
+
+//=================================
+// Scheduler
+//=================================
+void InitializeScheduler(void);
+void SetRunningTask(TCB* pstTask);
+TCB* GetRunningTask(void);
+TCB* GetNextTaskToRun(void);
+void AddTaskToReadyList(TCB* pstTask);
+void Schedule(void);
+BOOL ScheduleInInterrupt(void);
+void DecreaseProcessorTime(void);
+BOOL IsProcessorTimeExpired(void);
 
 #endif /*__TASK_H__*/
+
 
