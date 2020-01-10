@@ -62,20 +62,26 @@ void KeyboardHandler(int iVectorNumber){
 }
 
 
+// Timer interrupt handler
 void TimerHandler(int iVectorNumber){
 	char vcBuffer[] = "[INT:  , ]";
 	static int g_iTimerinterruptCount = 0;
 
+	// Print interrupt vector number
 	vcBuffer[5] = '0'+iVectorNumber/10;
 	vcBuffer[6] = '0'+iVectorNumber%10;
 
+	// Print count
 	vcBuffer[8] = '0'+g_iTimerinterruptCount;
 	g_iTimerinterruptCount = (g_iTimerinterruptCount +1) % 10;
 	PrintStringXY(70, 0, vcBuffer);
 
+	// Send EOI
 	SendEOIToPIC(iVectorNumber - PIC_IRQSTARTVECTOR);
+	// Increase Timer count
 	g_qwTickCount++;
 
+	// Decrease processor time used by task
 	DecreaseProcessorTime();
 	if(IsProcessorTimeExpired() == TRUE){
 		ScheduleInInterrupt();

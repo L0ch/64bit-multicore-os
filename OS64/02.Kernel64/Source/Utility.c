@@ -2,6 +2,7 @@
 #include "AssemblyUtility.h"
 #include <stdarg.h>
 
+// Number of times PIT controller occurred
 volatile QWORD g_qwTickCount = 0;
 
 

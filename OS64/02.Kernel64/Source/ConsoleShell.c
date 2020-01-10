@@ -352,6 +352,7 @@ void TestTask1(void){
 	CHARACTER* pstScreen = (CHARACTER*) CONSOLE_VIDEOMEMORYADDRESS;
 	TCB* pstRunningTask;
 
+	// Use task ID as screen offset
 	pstRunningTask = GetRunningTask();
 	iMargin = (pstRunningTask->stLink.qwID & 0xFFFFFFFF) % 10;
 
@@ -391,12 +392,14 @@ void TestTask1(void){
 
 }
 
+//
 void TestTask2(void){
 	int i = 0, iOffset;
 	CHARACTER* pstScreen = (CHARACTER*) CONSOLE_VIDEOMEMORYADDRESS;
 	TCB* pstRunningTask;
 	char vcData[4] = {'-', '\\', '|', '/'};
 
+	// Use task ID as screen offset
 	pstRunningTask = GetRunningTask();
 	iOffset = (pstRunningTask->stLink.qwID & 0xFFFFFFFF) * 2;
 	iOffset = CONSOLE_WIDTH * CONSOLE_HEIGHT - (iOffset % (CONSOLE_WIDTH * CONSOLE_HEIGHT));
@@ -412,6 +415,7 @@ void TestTask2(void){
 
 }
 
+// Create task
 void CreateTestTask(const char* pcParameterBuffer){
 	PARAMETERLIST stList;
 	char vcType[30];
@@ -423,6 +427,7 @@ void CreateTestTask(const char* pcParameterBuffer){
 	GetNextParameter(&stList, vcCount);
 
 	switch(AToI(vcType, 10)){
+	// Create type 1 task
 	case 1:
 		for(i=0; i<AToI(vcCount, 10); i++){
 			if(CreateTask(0, (QWORD)TestTask1) == NULL){
@@ -431,6 +436,7 @@ void CreateTestTask(const char* pcParameterBuffer){
 		}
 		Printf("Task1 %d Created\n", i);
 		break;
+	// Create type 2 task
 	case 2:
 	default:
 		for(i=0; i<AToI(vcCount, 10); i++){
