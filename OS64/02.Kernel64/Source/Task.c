@@ -126,7 +126,7 @@ void SetUpTask(TCB* pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress, void* pvSt
 //=====================================================
 
 // Initialize scheduler
-void InitializeShceduler(void){
+void InitializeScheduler(void){
 	InitializeTCBPool();
 
 	InitializeList(&(gs_stScheduler.stReadyList));
@@ -176,6 +176,7 @@ void Schedule(void){
 	// Get next task
 	pstNextTask = GetNextTaskToRun();
 	if(pstNextTask == NULL){
+
 		SetInterruptFlag(bPreviousFlag);
 		return ;
 	}

@@ -1,7 +1,7 @@
 #include "List.h"
 
 
-// Initailize list
+// Initialize list
 void InitializeList(LIST* pstList){
 	pstList->iNodeCount = 0;
 	pstList->pvHead = NULL;
@@ -83,11 +83,11 @@ void* RemoveList(LIST* pstList, QWORD qwID){
 			}
 			// If first node, set Head to next node
 			else if(pstLink == pstList->pvHead){
-				pstList->pvHead == pstLink->pvNext;
+				pstList->pvHead = pstLink->pvNext;
 			}
 			// If last node, set tail to previous node
 			else if(pstLink == pstList->pvTail){
-				pstList->pvTail == pstPreviousLink;
+				pstList->pvTail = pstPreviousLink;
 			}
 			else{
 				pstPreviousLink->pvNext = pstLink->pvNext;
