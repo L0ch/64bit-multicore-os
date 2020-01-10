@@ -7,6 +7,7 @@
 void CommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode);
 void CommonInterruptHnadler(int iVectorNumber);
 void KeyboardHandler(int iVectorNumber);
+void TimerHandler(int iVectorNumber);
 
 
 

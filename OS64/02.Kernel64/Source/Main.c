@@ -6,6 +6,8 @@
 #include "ConsoleShell.h"
 #include "AssemblyUtility.h"
 #include "Utility.h"
+#include "Task.h"
+#include "PIT.h"
 
 void Main(void){
 
@@ -40,6 +42,12 @@ void Main(void){
 	CheckTotalMemorySize();
 	SetCursor(46, CursorY++);
 	Printf("Done], %d MB\n",GetTotalMemorySize());
+
+	Printf("TCB Pool And Scheduler Initialize............[Done]\n");
+	CursorY++;
+	InitializeScheduler();
+	// Interrupt every 1ms
+	InitializePIT(MSTOCOUNT(1),1);
 
 	Printf("Keyboard Activate............................[    ]");
 

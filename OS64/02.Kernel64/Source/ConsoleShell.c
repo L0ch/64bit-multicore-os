@@ -17,7 +17,7 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"rdtsc", "Read Time Stamp Counter", ReadTimeStampCounter},
 		{"cpu", "Measure Processor Speed", MeasureProcessorSpeed},
 		{"date", "Show Date And Time", ShowDateAndTime},
-		{"createtask", "Create Task", CreateTestTask},
+		{"createtask", "Create Task, ex)createtask [TYPE] [COUNT]", CreateTestTask},
 		{"echo", "Print parameter", Echo},
 };
 
@@ -346,35 +346,102 @@ void ShowDateAndTime(const char* pcParameterBuffer){
 }
 
 
-static TCB gs_vstTask[2] = {0, };
-static QWORD gs_vstStack[1024] = {0, };
-void TestTask(void){
-	int i = 0;
+void TestTask1(void){
+	BYTE bData;
+	int i = 0, iX = 0, iY = 0, iMargin;
+	CHARACTER* pstScreen = (CHARACTER*) CONSOLE_VIDEOMEMORYADDRESS;
+	TCB* pstRunningTask;
+
+	pstRunningTask = GetRunningTask();
+	iMargin = (pstRunningTask->stLink.qwID & 0xFFFFFFFF) % 10;
 
 	while(1){
-		Printf("[%d] This message is from TestTask. Press any key to switch ConsoleShell\n", i++);
-		GetCh();
+		switch(i){
+		case 0:
+			iX++;
+			if(iX >= (CONSOLE_WIDTH - iMargin)){
+				i = 1;
+			}
+			break;
+		case 1:
+			iY++;
+			if(iY >= (CONSOLE_HEIGHT - iMargin)){
+				i = 2;
+			}
+			break;
+		case 2:
+			iX--;
+			if(iX < iMargin){
+				i = 3;
+			}
+			break;
+		case 3:
+			iY--;
+			if(iY<iMargin){
+				i = 0;
+			}
+			break;
+		}
+		pstScreen[iY * CONSOLE_WIDTH + iX].bCharactor = bData;
+		pstScreen[iY * CONSOLE_WIDTH + iX].bAttribute = bData & 0x0F;
+		bData++;
+		Schedule();
+	}
 
-		SwitchContext(&(gs_vstTask[1].stContext), &(gs_vstTask[0].stContext));
+
+}
+
+void TestTask2(void){
+	int i = 0, iOffset;
+	CHARACTER* pstScreen = (CHARACTER*) CONSOLE_VIDEOMEMORYADDRESS;
+	TCB* pstRunningTask;
+	char vcData[4] = {'-', '\\', '|', '/'};
+
+	pstRunningTask = GetRunningTask();
+	iOffset = (pstRunningTask->stLink.qwID & 0xFFFFFFFF) * 2;
+	iOffset = CONSOLE_WIDTH * CONSOLE_HEIGHT - (iOffset % (CONSOLE_WIDTH * CONSOLE_HEIGHT));
+
+	while(1){
+		pstScreen[iOffset].bCharactor = vcData[i % 4];
+		pstScreen[iOffset].bAttribute = (iOffset % 15) + 1;
+		i++;
+
+		Schedule();
 
 	}
+
 }
 
 void CreateTestTask(const char* pcParameterBuffer){
-	KEYDATA stData;
-	int i = 0;
+	PARAMETERLIST stList;
+	char vcType[30];
+	char vcCount[30];
+	int i;
 
-	SetUpTask(&(gs_vstTask[1]), 1, 0, (QWORD)TestTask, &(gs_vstStack), sizeof(gs_vstStack));
+	InitializeParameter(&stList, pcParameterBuffer);
+	GetNextParameter(&stList, vcType);
+	GetNextParameter(&stList, vcCount);
 
-	while(1){
-		Printf("[%d] This message is from ConsoleShell. Press any key to sitch TestTask\n", i++);
-		Printf("Press q If want exit Task test\n");
-		if(GetCh() == 'q'){
-			break;
+	switch(AToI(vcType, 10)){
+	case 1:
+		for(i=0; i<AToI(vcCount, 10); i++){
+			if(CreateTask(0, (QWORD)TestTask1) == NULL){
+				break;
+			}
 		}
-
-		SwitchContext(&(gs_vstTask[0].stContext), &(gs_vstTask[1].stContext));
+		Printf("Task1 %d Created\n", i);
+		break;
+	case 2:
+	default:
+		for(i=0; i<AToI(vcCount, 10); i++){
+			if(CreateTask(0, (QWORD)TestTask2) == NULL){
+				break;
+			}
+		}
+		Printf("Task2 %d Created\n", i);
+		break;
 	}
+
 }
 
 void Echo(const char* pcParameterBuffer){

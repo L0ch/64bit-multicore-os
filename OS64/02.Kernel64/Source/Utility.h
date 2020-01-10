@@ -21,5 +21,8 @@ int DecimalToString(long lValue, char* pcBuffer);
 int SPrintf(char* pcBuffer, const char* pcFormatString, ...);
 int VSPrintf(char* pcBuffer, const char* pcFormatString, va_list ap);
 int StrLen(const char* pcBuffer);
+QWORD GetTickCount(void);
+
+extern volatile QWORD g_qwTickCount;
 
 #endif /*__UTILITY_H__*/

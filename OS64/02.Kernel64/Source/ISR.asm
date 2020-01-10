@@ -4,6 +4,7 @@ SECTION .text
 
 ; Import
 extern CommonExceptionHandler, CommonInterruptHandler, KeyboardHandler
+extern TimerHandler
 
 ; Export
 ; ISR for Processing Exception
@@ -320,7 +321,7 @@ ISRTimer:
 	SAVECONTEXT
 
 	mov rdi, 32
-	call CommonInterruptHandler
+	call TimerHandler
 
 	LOADCONTEXT
 	iretq

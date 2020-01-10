@@ -2,6 +2,8 @@
 #include "AssemblyUtility.h"
 #include <stdarg.h>
 
+volatile QWORD g_qwTickCount = 0;
+
 
 // Fill Memory with specific value
 void MemSet( void* pvDestination, BYTE bData, int iSize ){
