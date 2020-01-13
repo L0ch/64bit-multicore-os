@@ -5,7 +5,7 @@ SECTION .text
 global InPortByte, OutPortByte, LoadGDTR, LoadTR, LoadIDTR
 global EnableInterrupt, DisableInterrupt, ReadRFLAGS
 global ReadTSC
-global SwitchContext
+global SwitchContext, Hlt
 
 ; Read 1byte from port
 InPortByte:
@@ -197,7 +197,11 @@ SwitchContext:
 	LOADCONTEXT
 	iretq
 
-
+; Make process wait state
+Hlt:
+	hlt
+	hlt
+	ret
 
 
 

@@ -14,6 +14,6 @@ void DisableInterrupt(void);
 QWORD ReadRFLAGS(void);
 QWORD ReadTSC(void);
 void SwitchContext(CONTEXT* pstCurrentContext, CONTEXT* pstNextContext);
-
+void Hlt(void);
 
 #endif /*__ASSEMBLYUTILITY_H__*/
