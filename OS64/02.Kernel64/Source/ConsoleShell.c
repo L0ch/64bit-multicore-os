@@ -5,6 +5,7 @@
 #include "PIT.h"
 #include "RTC.h"
 #include "AssemblyUtility.h"
+#include "Task.h"
 
 SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"help", "Show Help", Help},
@@ -19,6 +20,10 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"date", "Show Date And Time", ShowDateAndTime},
 		{"createtask", "Create Task, ex)createtask [TYPE] [COUNT]", CreateTestTask},
 		{"echo", "Print parameter", Echo},
+		{"chpri", "Change Task Priority. ex)chpri [ID] [PRIORITY]", ChangeTaskPriority},
+		{"task", "Show Task List", ShowTaskList},
+		{"kill", "End Task, ex)kill [ID]", KillTask},
+		{"cpuload", "Show Processor Load", CPULoad},
 };
 
 
@@ -144,7 +149,7 @@ int GetNextParameter(PARAMETERLIST* pstList, char* pcParameter){
 // Processing Command
 ////////////////////////////////////////////////////////
 
-void Help(const char* pcCommandBuffer){
+static void Help(const char* pcCommandBuffer){
 	int i;
 	int Count;
 	int CursorX, CursorY;
@@ -172,17 +177,17 @@ void Help(const char* pcCommandBuffer){
 }
 
 // Clear display
-void Clear(const char* pcParameterBuffer){
+static void Clear(const char* pcParameterBuffer){
 	//Clear Screen and move cursor
 	ClearScreen();
 	SetCursor(0,1);
 }
 
-void ShowTotalMemorySize(const char* pcParameterBuffer){
+static void ShowTotalMemorySize(const char* pcParameterBuffer){
 	Printf("Total Memory Size : %d MB\n", GetTotalMemorySize());
 }
 
-void StringToDecimalHex(const char* pcParameterBuffer){
+static void StringToDecimalHex(const char* pcParameterBuffer){
 	char vcParameter[100];
 	int iLength;
 	PARAMETERLIST stList;
@@ -221,7 +226,7 @@ void StringToDecimalHex(const char* pcParameterBuffer){
 	}
 }
 
-void Shutdown(const char* pcParameterBuffer){
+static void Shutdown(const char* pcParameterBuffer){
 	Printf("System Shutdown...\n");
 
 	Printf("Press Any Key To Reboot...");
@@ -230,7 +235,7 @@ void Shutdown(const char* pcParameterBuffer){
 }
 
 
-void SetTimer(const char* pcParameterBuffer){
+static void SetTimer(const char* pcParameterBuffer){
 	char vcParameter[100];
 	PARAMETERLIST stList;
 	long lMillisecond;
@@ -261,7 +266,7 @@ void SetTimer(const char* pcParameterBuffer){
 
 }
 
-void WaitUsingPIT(const char* pcParameterBuffer){
+static void WaitUsingPIT(const char* pcParameterBuffer){
 	char vcParameter[100];
 	int iLength;
 	PARAMETERLIST stList;
@@ -295,7 +300,7 @@ void WaitUsingPIT(const char* pcParameterBuffer){
 }
 
 
-void ReadTimeStampCounter(const char* pcParameterBuffer){
+static void ReadTimeStampCounter(const char* pcParameterBuffer){
 	QWORD qwTSC;
 
 	qwTSC = ReadTSC();
@@ -303,7 +308,7 @@ void ReadTimeStampCounter(const char* pcParameterBuffer){
 }
 
 // Measure processor performance
-void MeasureProcessorSpeed(const char* pcParameterBuffer){
+static void MeasureProcessorSpeed(const char* pcParameterBuffer){
 	int i;
 	QWORD qwLastTSC, qwTotalTSC = 0;
 
@@ -329,7 +334,7 @@ void MeasureProcessorSpeed(const char* pcParameterBuffer){
 
 
 // Show Date/Time Information stored RTC controller
-void ShowDateAndTime(const char* pcParameterBuffer){
+static void ShowDateAndTime(const char* pcParameterBuffer){
 	BYTE bSecond, bMinute, bHour;
 	BYTE bDayOfWeek, bDayOfMonth, bMonth;
 	WORD wYear;
@@ -346,9 +351,9 @@ void ShowDateAndTime(const char* pcParameterBuffer){
 }
 
 
-void TestTask1(void){
+static void TestTask1(void){
 	BYTE bData;
-	int i = 0, iX = 0, iY = 0, iMargin;
+	int i = 0, iX = 0, iY = 0, iMargin, j;
 	CHARACTER* pstScreen = (CHARACTER*) CONSOLE_VIDEOMEMORYADDRESS;
 	TCB* pstRunningTask;
 
@@ -356,7 +361,7 @@ void TestTask1(void){
 	pstRunningTask = GetRunningTask();
 	iMargin = (pstRunningTask->stLink.qwID & 0xFFFFFFFF) % 10;
 
-	while(1){
+	for(j=0; j<20000; j++){
 		switch(i){
 		case 0:
 			iX++;
@@ -386,14 +391,16 @@ void TestTask1(void){
 		pstScreen[iY * CONSOLE_WIDTH + iX].bCharactor = bData;
 		pstScreen[iY * CONSOLE_WIDTH + iX].bAttribute = bData & 0x0F;
 		bData++;
-		Schedule();
+		//Schedule();
 	}
+
+	ExitTask();
 
 
 }
 
 //
-void TestTask2(void){
+static void TestTask2(void){
 	int i = 0, iOffset;
 	CHARACTER* pstScreen = (CHARACTER*) CONSOLE_VIDEOMEMORYADDRESS;
 	TCB* pstRunningTask;
@@ -409,14 +416,14 @@ void TestTask2(void){
 		pstScreen[iOffset].bAttribute = (iOffset % 15) + 1;
 		i++;
 
-		Schedule();
+		//Schedule();
 
 	}
 
 }
 
 // Create task
-void CreateTestTask(const char* pcParameterBuffer){
+static void CreateTestTask(const char* pcParameterBuffer){
 	PARAMETERLIST stList;
 	char vcType[30];
 	char vcCount[30];
@@ -430,7 +437,7 @@ void CreateTestTask(const char* pcParameterBuffer){
 	// Create type 1 task
 	case 1:
 		for(i=0; i<AToI(vcCount, 10); i++){
-			if(CreateTask(0, (QWORD)TestTask1) == NULL){
+			if(CreateTask(TASK_FLAGS_LOW, (QWORD)TestTask1) == NULL){
 				break;
 			}
 		}
@@ -440,7 +447,7 @@ void CreateTestTask(const char* pcParameterBuffer){
 	case 2:
 	default:
 		for(i=0; i<AToI(vcCount, 10); i++){
-			if(CreateTask(0, (QWORD)TestTask2) == NULL){
+			if(CreateTask(TASK_FLAGS_LOW, (QWORD)TestTask2) == NULL){
 				break;
 			}
 		}
@@ -449,8 +456,92 @@ void CreateTestTask(const char* pcParameterBuffer){
 	}
 
 }
+// Change Task Priority
+static void ChangeTaskPriority(const char* pcParameterBuffer){
+	PARAMETERLIST stList;
+	char vcID[30];
+	char vcPriority[30];
+	QWORD qwID;
+	BYTE bPriority;
 
-void Echo(const char* pcParameterBuffer){
+	InitializeParameter(&stList, pcParameterBuffer);
+	GetNextParameter(&stList, vcID);
+	GetNextParameter(&stList, vcPriority);
+
+	// Hex format
+	if(MemCmp(vcID, "0x", 2) == 0){
+		qwID = AToI(vcID + 2, 16);
+	}
+	// Decimal format
+	else{
+		qwID = AToI(vcID, 10);
+	}
+	bPriority = AToI(vcPriority, 10);
+
+	// Change priority
+	Printf("Change Task Priority ID [0x%q] Priority[%d] ", qwID, bPriority);
+	if(ChangePriority(qwID, bPriority) == TRUE){
+		Printf("Success\n");
+	}
+	else{
+		Printf("Fail\n");
+	}
+}
+
+static void ShowTaskList(const char* pcParameterBuffer){
+	int i;
+	TCB* pstTCB;
+	int iCount = 0;
+
+	Printf("========== Task Total Count [%d] ==========\n", GetTaskCount());
+	for(i=0; i<TASK_MAXCOUNT; i++){
+		pstTCB = GetTCBInTCBPool(i);
+		if((pstTCB->stLink.qwID >> 32) != 0){
+			if((iCount != 0) && ((iCount % 10) == 0)){
+				Printf("Press any key to continue...(exit : q)");
+				if(GetCh() == 'q'){
+					Printf("\n");
+					break;
+				}
+				Printf("\n");
+			}
+			Printf("[%d] Task ID[0x%Q], Priority[%d], Flags[0x%Q]\n",
+					1 + iCount++, pstTCB->stLink.qwID, GETPRIORITY(pstTCB->qwFlags), pstTCB->qwFlags);
+		}
+	}
+
+}
+
+static void KillTask(const char* pcParameterBuffer){
+	PARAMETERLIST stList;
+	char vcID[30];
+	QWORD qwID;
+
+	InitializeParameter(&stList, pcParameterBuffer);
+	GetNextParameter(&stList, vcID);
+
+	if(MemCmp(vcID, "0x", 2) == 0){
+		qwID = AToI(vcID + 2, 16);
+	}
+	else{
+		qwID = AToI(vcID, 10);
+	}
+
+
+	Printf("Kill Task ID [0x%q] ", qwID);
+	if(EndTask(qwID) == TRUE){
+		Printf("Success\n");
+	}
+	else{
+		Printf("Fail\n");
+	}
+}
+
+static void CPULoad(const char* pcParameterBuffer){
+	Printf("Processor Load : %d%%\n", GetProcessorLoad());
+}
+
+static void Echo(const char* pcParameterBuffer){
 	char vcParameter[100];
 	PARAMETERLIST stList;
 	BOOL bAppendNewLine = TRUE;

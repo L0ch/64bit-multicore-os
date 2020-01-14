@@ -32,19 +32,24 @@ int GetNextParameter(PARAMETERLIST* pstList, char* pcParameter);
 
 
 // Shell command function
-void Help(const char* pcParameterBuffer);
-void Clear(const char* pcParameterBuffer);
-void ShowTotalMemorySize(const char* pcParameterBuffer);
-void StringToDecimalHex(const char* pcParameterBuffer);
-void Shutdown(const char* pcParameterBuffer);
-void SetTimer(const char* pcParameterBuffer);
-void WaitUsingPIT(const char* pcParameterBuffer);
-void ReadTimeStampCounter(const char* pcParameterBuffer);
-void MeasureProcessorSpeed(const char* pcParameterBuffer);
-void ShowDateAndTime(const char* pcParameterBuffer);
-void TestTask1(void);
-void TestTask2(void);
-void CreateTestTask(const char* pcParameterBuffer);
-void Echo(const char* pcParameterBuffer);
+static void Help(const char* pcParameterBuffer);
+static void Clear(const char* pcParameterBuffer);
+static void ShowTotalMemorySize(const char* pcParameterBuffer);
+static void StringToDecimalHex(const char* pcParameterBuffer);
+static void Shutdown(const char* pcParameterBuffer);
+static void SetTimer(const char* pcParameterBuffer);
+static void WaitUsingPIT(const char* pcParameterBuffer);
+static void ReadTimeStampCounter(const char* pcParameterBuffer);
+static void MeasureProcessorSpeed(const char* pcParameterBuffer);
+static void ShowDateAndTime(const char* pcParameterBuffer);
+static void TestTask1(void);
+static void TestTask2(void);
+static void CreateTestTask(const char* pcParameterBuffer);
+static void Echo(const char* pcParameterBuffer);
+static void ChangeTaskPriority(const char* pcParameterBuffer);
+static void ShowTaskList(const char* pcParameterBuffer);
+static void KillTask(const char* pcParameterBuffer);
+static void CPULoad(const char* pcParameterBuffer);
+
 
 #endif /*__CONSOLESHELL_H__*/
