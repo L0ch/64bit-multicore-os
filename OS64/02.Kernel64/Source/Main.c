@@ -70,6 +70,9 @@ void Main(void){
 	SetCursor(46, CursorY++);
 	Printf("Done\n");
 
+	// Create Idle task
+	CreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_IDLE, (QWORD) IdleTask);
+	// Start shell
 	StartConsoleShell();
 
 }

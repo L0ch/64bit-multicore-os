@@ -2,6 +2,7 @@
 #include "Descriptor.h"
 #include "Utility.h"
 #include "AssemblyUtility.h"
+#include "Console.h"
 
 static SCHEDULER gs_stScheduler;
 static TCBPOOLMANAGER gs_stTCBPoolManager;
@@ -381,11 +382,11 @@ BOOL EndTask(QWORD qwTaskID){
 		pstTarget = RemoveTaskFromReadyList(qwTaskID);
 		// does not exist in ready list
 		if(pstTarget == NULL){
-			pstTarget = GetTCBInTCBPool(GETTCBOFFSET(qwTaskID));
+			/*pstTarget = GetTCBInTCBPool(GETTCBOFFSET(qwTaskID));
 			if(pstTarget != NULL){
 				pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
 				SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
-			}
+			}*/
 			return FALSE;
 		}
 		pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
@@ -414,7 +415,7 @@ int GetReadyTaskCount(void){
 }
 
 // Return total task count
-int GetTaskCouont(void){
+int GetTaskCount(void){
 	int iTotalCount;
 
 	// task count in ready queue + wait task + running task(1)
@@ -463,6 +464,7 @@ void IdleTask(void){
 	qwLastSpendTickInIdleTask = gs_stScheduler.qwSpendProcessorTimeInIdleTask;
 	qwLastMeasureTickCount = GetTickCount();
 
+
 	while(1){
 		qwCurrentMeasureTickCount = GetTickCount();
 		qwCurrentSpendTickInIdleTask = gs_stScheduler.qwSpendProcessorTimeInIdleTask;
@@ -471,9 +473,8 @@ void IdleTask(void){
 		if(qwCurrentMeasureTickCount - qwLastMeasureTickCount == 0){
 			gs_stScheduler.qwProcessorLoad = 0;
 		}
-		// Idle task /
 		else{
-			gs_stScheduler.qwProcessorLoad = 100 - (qwCurrentMeasureTickCount - qwLastSpendTickInIdleTask) *
+			gs_stScheduler.qwProcessorLoad = 100 - (qwCurrentSpendTickInIdleTask - qwLastSpendTickInIdleTask) *
 												100 / (qwCurrentMeasureTickCount - qwLastMeasureTickCount);
 		}
 
