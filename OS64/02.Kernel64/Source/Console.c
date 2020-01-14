@@ -132,7 +132,7 @@ BYTE GetCh(void){
 
 	while(1){
 		while(GetKeyFromKeyQueue(&stData) == FALSE){
-			;
+			Schedule();
 		}
 
 		if(stData.bFlags & KEY_FLAGS_DOWN){
