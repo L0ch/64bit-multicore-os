@@ -344,6 +344,10 @@ int VSPrintf(char* pcBuffer, const char* pcFormatString, va_list ap){
 
 }
 
+QWORD GetTickCount(void){
+	return g_qwTickCount;
+}
+
 
 
 
