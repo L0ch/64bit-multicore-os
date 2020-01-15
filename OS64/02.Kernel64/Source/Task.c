@@ -3,6 +3,7 @@
 #include "Utility.h"
 #include "AssemblyUtility.h"
 #include "Console.h"
+#include "Synchronization.h"
 
 static SCHEDULER gs_stScheduler;
 static TCBPOOLMANAGER gs_stTCBPoolManager;
@@ -12,7 +13,7 @@ static TCBPOOLMANAGER gs_stTCBPoolManager;
 //=====================================================
 
 // Task pool Initialize
-void InitializeTCBPool(void){
+static void InitializeTCBPool(void){
 	int i;
 
 	MemSet(&(gs_stTCBPoolManager), 0, sizeof(gs_stTCBPoolManager));
@@ -31,7 +32,7 @@ void InitializeTCBPool(void){
 	gs_stTCBPoolManager.iAllocatedCount = 1;
 }
 // Allocate TCB
-TCB* AllocateTCB(void){
+static TCB* AllocateTCB(void){
 	TCB* pstEmptyTCB;
 	int i;
 
@@ -56,7 +57,7 @@ TCB* AllocateTCB(void){
 }
 
 // Deallocate TCB
-void FreeTCB(QWORD qwID){
+static void FreeTCB(QWORD qwID){
 	int i;
 
 	// Lower 32bit - index
@@ -74,24 +75,37 @@ void FreeTCB(QWORD qwID){
 TCB* CreateTask(QWORD qwFlags, QWORD qwEntryPointAddress){
 	TCB* pstTask;
 	void* pvStackAddress;
+	BOOL bPreviousFlag;
 
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
 	pstTask = AllocateTCB();
 	if(pstTask == NULL){
+		// End Critical Section
+		UnlockForSystemData(bPreviousFlag);
 		return NULL;
 	}
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
 
 	// Calc stack address by task ID (lower 32bit - stack pool offset)
 	pvStackAddress = (void*) (TASK_STACKPOOLADDRESS + (TASK_STACKSIZE * GETTCBOFFSET(pstTask->stLink.qwID)));
 
 	// Set TCB
 	SetUpTask(pstTask, qwFlags, qwEntryPointAddress, pvStackAddress, TASK_STACKSIZE);
+
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
+
 	// Insert ready list for scheduling
 	AddTaskToReadyList(pstTask);
 
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
 	return pstTask;
 }
 
-void SetUpTask(TCB* pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress, void* pvStackAddress, QWORD qwStackSize){
+static void SetUpTask(TCB* pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress, void* pvStackAddress, QWORD qwStackSize){
 	// Initialize Context
 	MemSet(pstTCB->stContext.vqRegister, 0, sizeof(pstTCB->stContext.vqRegister));
 
@@ -151,16 +165,36 @@ void InitializeScheduler(void){
 
 // Set running task
 void SetRunningTask(TCB* pstTask){
+	BOOL bPreviousFlag;
+
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
+
 	gs_stScheduler.pstRunningTask = pstTask;
+
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
 }
 
 // Return running task
 TCB* GetRunningTask(void){
-	return gs_stScheduler.pstRunningTask;
+	TCB* pstRunningTask;
+	BOOL bPreviousFlag;
+
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
+
+	pstRunningTask = gs_stScheduler.pstRunningTask;
+
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
+
+	return pstRunningTask;
+
 }
 
 // Get next task from task list
-TCB* GetNextTaskToRun(void){
+static TCB* GetNextTaskToRun(void){
 	TCB* pstTarget = NULL;
 	int iTaskCount, i, j;
 
@@ -190,7 +224,7 @@ TCB* GetNextTaskToRun(void){
 }
 
 // Add task to ready list of scheduler
-BOOL AddTaskToReadyList(TCB* pstTask){
+static BOOL AddTaskToReadyList(TCB* pstTask){
 	BYTE bPriority;
 
 	bPriority = GETPRIORITY(pstTask->qwFlags);
@@ -201,7 +235,7 @@ BOOL AddTaskToReadyList(TCB* pstTask){
 	return TRUE;
 }
 
-TCB* RemoveTaskFromReadyList(QWORD qwTaskID){
+static TCB* RemoveTaskFromReadyList(QWORD qwTaskID){
 	TCB* pstTarget;
 	BYTE bPriority;
 
@@ -224,10 +258,13 @@ TCB* RemoveTaskFromReadyList(QWORD qwTaskID){
 
 BOOL ChangePriority(QWORD qwTaskID, BYTE bPriority){
 	TCB* pstTarget;
+	BOOL bPreviousFlag;
 
 	if(bPriority > TASK_MAXREADYLISTCOUNT){
 		return FALSE;
 	}
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
 
 	// If running task, change priority
 	// Move set priority when task change
@@ -252,6 +289,8 @@ BOOL ChangePriority(QWORD qwTaskID, BYTE bPriority){
 			AddTaskToReadyList(pstTarget);
 		}
 	}
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
 	return TRUE;
 }
 
@@ -266,13 +305,14 @@ void Schedule(void){
 		return ;
 	}
 
-	// Interrupt disable
-	bPreviousFlag = SetInterruptFlag(FALSE);
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
 	// Get next task
 	pstNextTask = GetNextTaskToRun();
 	if(pstNextTask == NULL){
 
-		SetInterruptFlag(bPreviousFlag);
+		// End Critical Section
+		UnlockForSystemData(bPreviousFlag);
 		return ;
 	}
 
@@ -299,18 +339,24 @@ void Schedule(void){
 		SwitchContext(&(pstRunningTask->stContext), &(pstNextTask->stContext));
 	}
 
-	// Interrupt enable
-	SetInterruptFlag(bPreviousFlag);
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
 
 }
 
 BOOL ScheduleInInterrupt(void){
 	TCB* pstRunningTask, * pstNextTask;
 	char* pcContextAddress;
+	BOOL bPreviousFlag;
+
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
 
 	// Task does not exist to change
 	pstNextTask = GetNextTaskToRun();
 	if(pstNextTask == NULL){
+		// End Critical Section
+		UnlockForSystemData(bPreviousFlag);
 		return FALSE;
 	}
 	// Processing task switch
@@ -338,6 +384,8 @@ BOOL ScheduleInInterrupt(void){
 		MemCpy(&(pstRunningTask->stContext), pcContextAddress, sizeof(CONTEXT));
 		AddTaskToReadyList(pstRunningTask);
 	}
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
 
 	// Copy context to IST
 	MemCpy(pcContextAddress, &(pstNextTask->stContext), sizeof(CONTEXT));
@@ -366,12 +414,19 @@ BOOL IsProcessorTimeExpired(void){
 BOOL EndTask(QWORD qwTaskID){
 	TCB* pstTarget;
 	BYTE bPriority;
+	BOOL bPreviousFlag;
+
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
 
 	// If running task, set EndTask bit and switch task
 	pstTarget = gs_stScheduler.pstRunningTask;
 	if(pstTarget->stLink.qwID == qwTaskID){
 		pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
 		SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
+
+		// End Critical Section
+		UnlockForSystemData(bPreviousFlag);
 
 		Schedule();
 		// Never execute this code
@@ -387,12 +442,16 @@ BOOL EndTask(QWORD qwTaskID){
 				pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
 				SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
 			}*/
-			return FALSE;
+			// End Critical Section
+			UnlockForSystemData(bPreviousFlag);
+			return TRUE;
 		}
 		pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
 		SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
 		AddListToTail(&(gs_stScheduler.stWaitList), pstTarget);
 	}
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
 	return TRUE;
 }
 
@@ -405,22 +464,36 @@ void ExitTask(void){
 int GetReadyTaskCount(void){
 	int iTotalCount = 0;
 	int i;
+	BOOL bPreviousFlag;
+
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
 
 	// Check all ready queue
 	for(i=0; i<TASK_MAXREADYLISTCOUNT; i++){
 		iTotalCount += GetListCount(&(gs_stScheduler.vstReadyList[i]));
 	}
 
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
 	return iTotalCount;
 }
 
 // Return total task count
 int GetTaskCount(void){
 	int iTotalCount;
+	BOOL bPreviousFlag;
 
 	// task count in ready queue + wait task + running task(1)
 	iTotalCount = GetReadyTaskCount();
+
+	// Start Critical Section
+	bPreviousFlag = LockForSystemData();
+
 	iTotalCount += GetListCount(&(gs_stScheduler.stWaitList)) + 1;
+
+	// End Critical Section
+	UnlockForSystemData(bPreviousFlag);
 
 	return iTotalCount;
 }
@@ -444,7 +517,7 @@ BOOL IsTaskExist(QWORD qwID){
 }
 
 QWORD GetProcessorLoad(void){
-return gs_stScheduler.qwProcessorLoad;
+	return gs_stScheduler.qwProcessorLoad;
 }
 
 
@@ -459,6 +532,8 @@ void IdleTask(void){
 	TCB* pstTask;
 	QWORD qwLastMeasureTickCount, qwLastSpendTickInIdleTask;
 	QWORD qwCurrentMeasureTickCount, qwCurrentSpendTickInIdleTask;
+	BOOL bPreviousFlag;
+	QWORD qwTaskID;
 
 	// For calc processor load
 	qwLastSpendTickInIdleTask = gs_stScheduler.qwSpendProcessorTimeInIdleTask;
@@ -483,14 +558,23 @@ void IdleTask(void){
 
 		HaltProcessorByLoad();
 
+		// If tasks in wait list, end tasks
 		if(GetListCount(&(gs_stScheduler.stWaitList)) >= 0){
 			while(1){
+				// Start Critical Section
+				bPreviousFlag = LockForSystemData();
+
 				pstTask  = RemoveListFromHead(&(gs_stScheduler.stWaitList));
 				if(pstTask == NULL){
+					UnlockForSystemData(bPreviousFlag);
 					break;
 				}
-				Printf("IDLE: Task ID[0x%q] is completely ended.\n", pstTask->stLink.qwID);
-				FreeTCB(pstTask->stLink.qwID);
+				qwTaskID = pstTask->stLink.qwID;
+				FreeTCB(qwTaskID);
+				// End Critical Section
+				UnlockForSystemData(bPreviousFlag);
+				Printf("IDLE: Task ID[0x%q] is completely ended.\n", qwTaskID);
+
 			}
 		}
 		Schedule();

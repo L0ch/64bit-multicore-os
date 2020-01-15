@@ -5,7 +5,7 @@ SECTION .text
 global InPortByte, OutPortByte, LoadGDTR, LoadTR, LoadIDTR
 global EnableInterrupt, DisableInterrupt, ReadRFLAGS
 global ReadTSC
-global SwitchContext, Hlt
+global SwitchContext, Hlt, TestAndSet
 
 ; Read 1byte from port
 InPortByte:
@@ -203,8 +203,23 @@ Hlt:
 	hlt
 	ret
 
+; Compare rdi, rsi
+; If same, rdi = rdx
+; PARAM: rdi - Destination
+;        rsi - Compare
+;        rdx - Source
+TestAndSet:
+	mov rax, rsi
 
+	lock cmpxchg byte [rdi], dl		; If same, go SUCCESS and set rdi as rdx
+	je .SUCCESS						; If not, go NOTSAME
 
+.NOTSAME:
+	mov rax, 0x00
+	ret				; Return FALSE
+.SUCCESS:
+	mov rax, 0x01
+	ret				; Return TRUE
 
 
 
