@@ -3,6 +3,7 @@
 #include "Keyboard.h"
 #include "Queue.h"
 #include "Utility.h"
+#include "Synchronization.h"
 
 // Return whether Data was received in output buffer
 BOOL IsOutputBufferFull(void){
@@ -474,14 +475,14 @@ BOOL ConvertScanCodeAndPutQueue(BYTE bScanCode){
 
 	// Convert scan code to ASCII code
 	if(ConvertScanCodeToASCIICode(bScanCode, &(stData.bASCIICode), &(stData.bFlags)) == TRUE){
-		// Interrupt disable
-		bPreviousInterrupt = SetInterruptFlag(FALSE);
+		// Start Critical ZSection
+		bPreviousInterrupt = LockForSystemData();
 
 		// Insert key data
 		bResult = PutQueue(&gs_stKeyQueue, &stData);
 
-		// Restore interrupt flag
-		SetInterruptFlag(bPreviousInterrupt);
+		// End Critical Section
+		UnlockForSystemData(bPreviousInterrupt);
 	}
 
 	return bResult;
@@ -498,14 +499,14 @@ BOOL GetKeyFromKeyQueue(KEYDATA* pstData){
 		return FALSE;
 	}
 
-	// Interrupt disable
-	bPreviousInterrupt = SetInterruptFlag(FALSE);
+	// Start Critical Section
+	bPreviousInterrupt = LockForSystemData();
 
 	// Get key data(In Queue, remove data)
 	bResult = GetQueue(&gs_stKeyQueue, pstData);
 
-	// Restore interrupt flag
-	SetInterruptFlag(bPreviousInterrupt);
+	// End Critical Section
+	UnlockForSystemData(bPreviousInterrupt);
 	return bResult;
 }
 

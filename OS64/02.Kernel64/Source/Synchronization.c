@@ -11,7 +11,7 @@ void UnlockForSystemData(BOOL bInterruptFlag){
 	SetInterruptFlag(bInterruptFlag);
 }
 
-void InitialzieMutex(MUTEX* pstMutex){
+void InitializeMutex(MUTEX* pstMutex){
 	pstMutex->bLockFlag = FALSE;
 	pstMutex->dwLockCount = 0;
 	pstMutex->qwTaskID = TASK_INVALIDID;
