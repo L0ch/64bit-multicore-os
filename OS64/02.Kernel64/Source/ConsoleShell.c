@@ -6,6 +6,7 @@
 #include "RTC.h"
 #include "AssemblyUtility.h"
 #include "Task.h"
+#include "Synchronization.h"
 
 SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"help", "Show Help", Help},
@@ -22,8 +23,9 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"echo", "Print parameter", Echo},
 		{"chpri", "Change Task Priority. ex)chpri [ID] [PRIORITY]", ChangeTaskPriority},
 		{"task", "Show Task List", ShowTaskList},
-		{"kill", "End Task, ex)kill [ID]", KillTask},
+		{"kill", "End Task, ex)kill [ID] or 0xFFFFFFFF(All Task)", KillTask},
 		{"cpuload", "Show Processor Load", CPULoad},
+		{"testmutex", "Test Mutex Function", TestMutex},
 };
 
 
@@ -516,6 +518,8 @@ static void KillTask(const char* pcParameterBuffer){
 	PARAMETERLIST stList;
 	char vcID[30];
 	QWORD qwID;
+	TCB* pstTCB;
+	int i;
 
 	InitializeParameter(&stList, pcParameterBuffer);
 	GetNextParameter(&stList, vcID);
@@ -527,19 +531,92 @@ static void KillTask(const char* pcParameterBuffer){
 		qwID = AToI(vcID, 10);
 	}
 
-
-	Printf("Kill Task ID [0x%q] ", qwID);
-	if(EndTask(qwID) == TRUE){
-		Printf("Success\n");
+	// Kill specific task
+	if(qwID != 0xFFFFFFFF){
+		Printf("Kill Task ID [0x%q] ", qwID);
+		if(EndTask(qwID) == TRUE){
+			Printf("Success\n");
+		}
+		else{
+			Printf("Fail\n");
+		}
 	}
+	// Kill all task except shell/idle task
 	else{
-		Printf("Fail\n");
+		for(i=2; i<TASK_MAXCOUNT; i++){
+			pstTCB = GetTCBInTCBPool(i);
+			qwID = pstTCB->stLink.qwID;
+			if((qwID >> 32) != 0){
+				Printf("Kill Task ID [0x%q] ", qwID);
+				if(EndTask(qwID) == TRUE){
+					Printf("Success\n");
+				}
+				else{
+					Printf("Fail\n");
+				}
+			}
+		}
 	}
+
+
+
 }
 
 static void CPULoad(const char* pcParameterBuffer){
 	Printf("Processor Load : %d%%\n", GetProcessorLoad());
 }
+
+// For test
+static MUTEX gs_stMutex;
+static volatile QWORD gs_qwAdder;
+
+// Test Mutex
+static void PrintNumberTask(void){
+	int i,j;
+	QWORD qwTickCount;
+
+	qwTickCount = GetTickCount();
+	while((GetTickCount() - qwTickCount) < 50){
+		Schedule();
+	}
+
+	// Print number with loop
+	for(i=0; i<5; i++){
+		Lock(&gs_stMutex);
+		Printf("Task ID [0x%q] Value[%d]\n", GetRunningTask()->stLink.qwID, gs_qwAdder);
+		gs_qwAdder += 1;
+		Unlock(&gs_stMutex);
+
+		// Wait for task to change
+		for(j = 0; j<30000; j++);
+	}
+
+	// Wait for all task to exit
+	qwTickCount = GetTickCount();
+	while((GetTickCount() - qwTickCount) < 1000){
+		Schedule();
+	}
+
+	ExitTask();
+
+}
+
+// Create task for test Mutex
+static void TestMutex(const char* pcParameterBuffer){
+	int i;
+
+	gs_qwAdder = 1;
+
+	InitializeMutex(&gs_stMutex);
+
+	// Create 3 task for test Mutex
+	for(i=0; i<3; i++){
+		CreateTask(TASK_FLAGS_LOW, (QWORD)PrintNumberTask);
+	}
+	Printf("Wait Until %d Task End...\n", i);
+	GetCh();
+}
+
 
 static void Echo(const char* pcParameterBuffer){
 	char vcParameter[100];
