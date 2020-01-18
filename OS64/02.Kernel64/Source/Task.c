@@ -72,8 +72,8 @@ static void FreeTCB(QWORD qwID){
 
 // Create Task
 // Allocate stack from stack pool by task ID
-TCB* CreateTask(QWORD qwFlags, QWORD qwEntryPointAddress){
-	TCB* pstTask;
+TCB* CreateTask(QWORD qwFlags, void* pvMemoryAddress, QWORD qwMemorySize, QWORD qwEntryPointAddress){
+	TCB* pstTask, * pstProcess;
 	void* pvStackAddress;
 	BOOL bPreviousFlag;
 
@@ -85,14 +85,45 @@ TCB* CreateTask(QWORD qwFlags, QWORD qwEntryPointAddress){
 		UnlockForSystemData(bPreviousFlag);
 		return NULL;
 	}
+
+	// Search current process(parent process)
+	pstProcess = GetProcessByThread(GetRunningTask());
+	if(pstProcess == NULL){
+		FreeTCB(pstTask->stLink.qwID);
+		// End Critical Section
+		UnlockForSystemData(bPreviousFlag);
+		return NULL;
+	}
+	// Create thread
+	// link to child thread list
+	if(qwFlags & TASK_FLAGS_THREAD){
+		// Inherit process info
+		pstTask->qwParentProcessID = pstProcess->stLink.qwID;
+		pstTask->pvMemoryAddress = pstProcess->pvMemoryAddress;
+		pstTask->qwMemorySize = pstProcess->qwMemorySize;
+
+		// Add to child thread list of parent process
+		AddListToTail(&(pstProcess->stChildThreadList), &(pstTask->stThreadLink));
+	}
+	// Create process
+	else{
+		pstTask->qwParentProcessID = pstProcess->stLink.qwID;
+		pstTask->pvMemoryAddress = pvMemoryAddress;
+		pstTask->qwMemorySize = qwMemorySize;
+	}
+
+	// Set thread ID equal to task ID
+	pstTask->stThreadLink.qwID = pstTask->stLink.qwID;
 	// End Critical Section
 	UnlockForSystemData(bPreviousFlag);
-
 	// Calc stack address by task ID (lower 32bit - stack pool offset)
 	pvStackAddress = (void*) (TASK_STACKPOOLADDRESS + (TASK_STACKSIZE * GETTCBOFFSET(pstTask->stLink.qwID)));
 
 	// Set TCB
 	SetUpTask(pstTask, qwFlags, qwEntryPointAddress, pvStackAddress, TASK_STACKSIZE);
+
+	// Initialize child thread list
+	InitializeList(&(pstTask->stChildThreadList));
 
 	// Start Critical Section
 	bPreviousFlag = LockForSystemData();
@@ -110,9 +141,12 @@ static void SetUpTask(TCB* pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress, voi
 	MemSet(pstTCB->stContext.vqRegister, 0, sizeof(pstTCB->stContext.vqRegister));
 
 	// Initialize stack pointer register
-	pstTCB->stContext.vqRegister[TASK_RSPOFFSET] = (QWORD) pvStackAddress + qwStackSize;	// RSP
-	pstTCB->stContext.vqRegister[TASK_RBPOFFSET] = (QWORD) pvStackAddress + qwStackSize;	// RBP
+	pstTCB->stContext.vqRegister[TASK_RSPOFFSET] = (QWORD) pvStackAddress + qwStackSize - 8;	// RSP
+	pstTCB->stContext.vqRegister[TASK_RBPOFFSET] = (QWORD) pvStackAddress + qwStackSize - 8;	// RBP
 
+	// Return Address = ExitTask()
+	// Call ExitTask() exiting entry point function
+	*(QWORD*)((QWORD) pvStackAddress + qwStackSize - 8) = (QWORD) ExitTask;
 	// Set segment selector
 	pstTCB->stContext.vqRegister[TASK_CSOFFSET] = GDT_KERNELCODESEGMENT;	// CS
 	pstTCB->stContext.vqRegister[TASK_DSOFFSET] = GDT_KERNELDATASEGMENT;	// DS
@@ -143,6 +177,7 @@ static void SetUpTask(TCB* pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress, voi
 // Initialize scheduler
 void InitializeScheduler(void){
 	int i;
+	TCB* pstTask;
 
 	InitializeTCBPool();
 	for(i=0; i<TASK_MAXREADYLISTCOUNT ;i++ ){
@@ -154,8 +189,14 @@ void InitializeScheduler(void){
 
 	// Allocate TCB and set running task
 	// Prepare TCB for Booting task (priority : HIGHEST)
-	gs_stScheduler.pstRunningTask = AllocateTCB();
-	gs_stScheduler.pstRunningTask->qwFlags = TASK_FLAGS_HIGHEST;
+	pstTask = AllocateTCB();
+	gs_stScheduler.pstRunningTask = pstTask;
+	pstTask->qwFlags = TASK_FLAGS_HIGHEST | TASK_FLAGS_PROCESS | TASK_FLAGS_SYSTEM;
+	pstTask->qwParentProcessID = pstTask->stLink.qwID;
+	pstTask->pvMemoryAddress = (void*) 0x100000;
+	pstTask->qwMemorySize = 0x500000;
+	pstTask->pvStackAddress = (void*) 0x600000;
+	pstTask->qwStackSize = 0x100000;
 
 	// Initialize processor utilization structure
 	gs_stScheduler.qwSpendProcessorTimeInIdleTask = 0;
@@ -520,6 +561,25 @@ QWORD GetProcessorLoad(void){
 	return gs_stScheduler.qwProcessorLoad;
 }
 
+// Return process thread belong to
+static TCB* GetProcessByThread(TCB* pstThread){
+	TCB* pstProcess;
+
+	// If process, return as is
+	if(pstThread->qwFlags & TASK_FLAGS_PROCESS){
+		return pstThread;
+	}
+
+	// If thread
+	// Get TCB with ParentProcessID field
+	pstProcess = GetTCBInTCBPool(GETTCBOFFSET(pstThread->qwParentProcessID));
+
+	if((pstProcess == NULL) || (pstProcess->stLink.qwID != pstThread->qwParentProcessID)){
+		return NULL;
+	}
+	return pstProcess;
+}
+
 
 //==============================================================
 //						Idle Task
@@ -529,11 +589,13 @@ QWORD GetProcessorLoad(void){
 // Free TCB in wait task
 // Calculate processor load %
 void IdleTask(void){
-	TCB* pstTask;
+	TCB* pstTask, * pstChildThread, * pstProcess;
 	QWORD qwLastMeasureTickCount, qwLastSpendTickInIdleTask;
 	QWORD qwCurrentMeasureTickCount, qwCurrentSpendTickInIdleTask;
 	BOOL bPreviousFlag;
+	int i, iCount;
 	QWORD qwTaskID;
+	void* pstThreadLink;
 
 	// For calc processor load
 	qwLastSpendTickInIdleTask = gs_stScheduler.qwSpendProcessorTimeInIdleTask;
@@ -566,8 +628,46 @@ void IdleTask(void){
 
 				pstTask  = RemoveListFromHead(&(gs_stScheduler.stWaitList));
 				if(pstTask == NULL){
+					// End Critical Section
 					UnlockForSystemData(bPreviousFlag);
 					break;
+				}
+
+				if(pstTask->qwFlags & TASK_FLAGS_PROCESS){
+					// End all child thread
+					iCount = GetListCount(&(pstTask->stChildThreadList));
+					for(i=0; i<iCount; i++){
+						pstThreadLink = (TCB*) RemoveListFromHead(&(pstTask->stChildThreadList));
+						if(pstThreadLink == NULL){
+							break;
+						}
+						// Need to calculate for get TCB start address from child thread info
+						pstChildThread = GETTCBFROMTHREADLINK(pstThreadLink);
+
+						// Reinsert child thread list to remove child thread itself
+						AddListToTail(&(pstTask->stChildThreadList), &(pstChildThread->stThreadLink));
+						// End child thread
+						EndTask(pstChildThread->stLink.qwID);
+					}
+
+					// Insert wait list until all child thread ended
+					if(GetListCount(&(pstTask->stChildThreadList)) > 0){
+						AddListToTail(&(gs_stScheduler.stWaitList), pstTask);
+						// End Critical Section
+						UnlockForSystemData(bPreviousFlag);
+						continue;
+					}
+					// TODO : Memory free
+					else{
+
+					}
+				}
+				// If thread, remove from child thread list of process
+				else if(pstTask->qwFlags & TASK_FLAGS_THREAD){
+					pstProcess = GetProcessByThread(pstTask);
+					if(pstProcess != NULL){
+						RemoveList(&(pstProcess->stChildThreadList), pstTask->stLink.qwID);
+					}
 				}
 				qwTaskID = pstTask->stLink.qwID;
 				FreeTCB(qwTaskID);
