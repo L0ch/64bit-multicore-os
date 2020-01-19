@@ -478,11 +478,11 @@ BOOL EndTask(QWORD qwTaskID){
 		pstTarget = RemoveTaskFromReadyList(qwTaskID);
 		// does not exist in ready list
 		if(pstTarget == NULL){
-			/*pstTarget = GetTCBInTCBPool(GETTCBOFFSET(qwTaskID));
+			pstTarget = GetTCBInTCBPool(GETTCBOFFSET(qwTaskID));
 			if(pstTarget != NULL){
 				pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
 				SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
-			}*/
+			}
 			// End Critical Section
 			UnlockForSystemData(bPreviousFlag);
 			return TRUE;
