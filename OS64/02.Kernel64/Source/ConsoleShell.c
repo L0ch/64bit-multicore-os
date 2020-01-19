@@ -26,6 +26,7 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"kill", "End Task, ex)kill [ID] or 0xFFFFFFFF(All Task)", KillTask},
 		{"cpuload", "Show Processor Load", CPULoad},
 		{"testmutex", "Test Mutex Function", TestMutex},
+		{"testthread", "Test Thread And Process Function", TestThread},
 };
 
 
@@ -439,7 +440,7 @@ static void CreateTestTask(const char* pcParameterBuffer){
 	// Create type 1 task
 	case 1:
 		for(i=0; i<AToI(vcCount, 10); i++){
-			if(CreateTask(TASK_FLAGS_LOW, (QWORD)TestTask1) == NULL){
+			if(CreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, (QWORD)TestTask1) == NULL){
 				break;
 			}
 		}
@@ -449,7 +450,7 @@ static void CreateTestTask(const char* pcParameterBuffer){
 	case 2:
 	default:
 		for(i=0; i<AToI(vcCount, 10); i++){
-			if(CreateTask(TASK_FLAGS_LOW, (QWORD)TestTask2) == NULL){
+			if(CreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, (QWORD)TestTask2) == NULL){
 				break;
 			}
 		}
@@ -507,8 +508,12 @@ static void ShowTaskList(const char* pcParameterBuffer){
 				}
 				Printf("\n");
 			}
-			Printf("[%d] Task ID[0x%Q], Priority[%d], Flags[0x%Q]\n",
-					1 + iCount++, pstTCB->stLink.qwID, GETPRIORITY(pstTCB->qwFlags), pstTCB->qwFlags);
+			Printf("[%d] Task ID[0x%Q], Priority[%d], Flags[0x%Q], Thread[%d]\n",
+					1 + iCount++, pstTCB->stLink.qwID, GETPRIORITY(pstTCB->qwFlags),
+					pstTCB->qwFlags, GetListCount(&(pstTCB->stChildThreadList)));
+			Printf("     Parent PID[0x%Q], Memory Address[0x%Q], Size[0x%Q]\n", pstTCB->qwParentProcessID,
+					pstTCB->pvMemoryAddress, pstTCB->qwMemorySize);
+
 		}
 	}
 
@@ -533,20 +538,30 @@ static void KillTask(const char* pcParameterBuffer){
 
 	// Kill specific task
 	if(qwID != 0xFFFFFFFF){
-		Printf("Kill Task ID [0x%q] ", qwID);
-		if(EndTask(qwID) == TRUE){
-			Printf("Success\n");
+		pstTCB = GetTCBInTCBPool(GETTCBOFFSET(qwID));
+		qwID = pstTCB->stLink.qwID;
+
+		// Except system task
+		if(((qwID >> 32) != 0) && ((pstTCB->qwFlags & TASK_FLAGS_SYSTEM) == 0x00)){
+			Printf("Kill Task ID [0x%q] ", qwID);
+			if(EndTask(qwID) == TRUE){
+				Printf("Success\n");
+			}
+			else{
+				Printf("Fail\n");
+			}
 		}
 		else{
-			Printf("Fail\n");
+			Printf("[ERROR] Task does not exist or system task\n");
 		}
+
 	}
 	// Kill all task except shell/idle task
 	else{
-		for(i=2; i<TASK_MAXCOUNT; i++){
+		for(i=0; i<TASK_MAXCOUNT; i++){
 			pstTCB = GetTCBInTCBPool(i);
 			qwID = pstTCB->stLink.qwID;
-			if((qwID >> 32) != 0){
+			if((qwID >> 32) != 0 && ((pstTCB->qwFlags & TASK_FLAGS_SYSTEM) == 0x00)){
 				Printf("Kill Task ID [0x%q] ", qwID);
 				if(EndTask(qwID) == TRUE){
 					Printf("Success\n");
@@ -611,12 +626,34 @@ static void TestMutex(const char* pcParameterBuffer){
 
 	// Create 3 task for test Mutex
 	for(i=0; i<3; i++){
-		CreateTask(TASK_FLAGS_LOW, (QWORD)PrintNumberTask);
+		CreateTask(TASK_FLAGS_LOW| TASK_FLAGS_THREAD, 0, 0, (QWORD)PrintNumberTask);
 	}
 	Printf("Wait Until %d Task End...\n", i);
 	GetCh();
 }
 
+static void CreateThreadTask(void){
+	int i;
+	for(i=0; i<3; i++){
+		CreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, (QWORD)TestTask2);
+	}
+
+	while(1){
+		Sleep(1);
+	}
+}
+
+static void TestThread(const char* pcParameterBuffer){
+	TCB* pstProcess;
+	pstProcess = CreateTask(TASK_FLAGS_LOW | TASK_FLAGS_PROCESS, (void*)0xEEEEEEEE, 0x1000, (QWORD)CreateThreadTask);
+
+	if(pstProcess != NULL){
+		Printf("Process [0x%Q] Create Success\n", pstProcess->stLink.qwID);
+	}
+	else{
+		Printf("Process Create Fail\n");
+	}
+}
 
 static void Echo(const char* pcParameterBuffer){
 	char vcParameter[100];
