@@ -16,5 +16,11 @@ QWORD ReadTSC(void);
 void SwitchContext(CONTEXT* pstCurrentContext, CONTEXT* pstNextContext);
 void Hlt(void);
 BOOL TestAndSet(volatile BYTE* pbDestination, BYTE bCompare, BYTE bSource);
+void InitializeFPU(void);
+void SaveFPUContext(void* pvFPUContext);
+void LoadFPUContext(void* pvFPUContext);
+void SetTS(void);
+void ClearTS(void);
+
 
 #endif /*__ASSEMBLYUTILITY_H__*/

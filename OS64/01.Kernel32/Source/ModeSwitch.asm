@@ -45,7 +45,7 @@ kReadCPUID:
 kSwitchAndExecute64bitKernel:
 	; PAE bit of CR4 register = 1
 	mov eax, cr4
-	or eax, 0x20	; PAE bit(bit 5) 1
+	or eax, 0x620	; PAE bit(bit 5), OSXMMEXCPT bit(bit 10), OSFXSR bit(bit 9) 1
 	mov cr4, eax
 
 	; CR3 = PML4 Table Address
@@ -62,10 +62,11 @@ kSwitchAndExecute64bitKernel:
 	wrmsr				; Write MSR register
 
 
+	; Set CR0 control register to activate cache, paging, FPU
 	mov eax, cr0
-	or eax, 0xE0000000		; Set NW(29), CD(30), PG(31) to 1
-	xor eax, 0x60000000		; XOR NW, CD (set 0)
-	mov cr0, eax			; NW=0, CD=0, PG=1
+	or eax, 0xE000000E		; Set NW(29), CD(30), PG(31), TS(3), EM(2), MP(1) 1
+	xor eax, 0x60000004		; Set NW, CD, EM 0
+	mov cr0, eax
 
 	jmp 0x08:0x200000		; Change CS segment selector to IA-32e Mode code segment descriptor
 							; jmp 0x200000(2MB) address

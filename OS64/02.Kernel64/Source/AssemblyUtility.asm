@@ -6,6 +6,7 @@ global InPortByte, OutPortByte, LoadGDTR, LoadTR, LoadIDTR
 global EnableInterrupt, DisableInterrupt, ReadRFLAGS
 global ReadTSC
 global SwitchContext, Hlt, TestAndSet
+global InitailizeFPU, SaveFPUContext, LoadFPUContext, SetTS, ClearTS
 
 ; Read 1byte from port
 InPortByte:
@@ -222,7 +223,38 @@ TestAndSet:
 	ret				; Return TRUE
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;	FPU
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+InitializeFPU:
+	finit		;FPU initialize
+	ret
 
+; Save FPU registers
+; PARAM : Buffer Address
+SaveFPUContext:
+	fxsave	[rdi]
+	ret
+
+; Load FPU registers
+; PARAM : Buffer Address
+LoadFPUContext:
+	fxrstor	[rdi]
+	ret
+
+; Set TS bit 1 (CR0 Control register)
+SetTS:
+	push rax
+	mov rax, cr0
+	or rax, 0x08	; Set TS bit(7) 1
+	mov cr0, rax
+
+	pop rax
+	ret
+
+ClearTS:
+	clts	; Set TS bit(7) 0
+	ret
 
 
 
