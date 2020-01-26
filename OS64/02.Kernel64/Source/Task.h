@@ -80,6 +80,7 @@ typedef struct ContextStruct{
 
 
 // Control task status
+// Add padding to be multiple of 16 (FPU)
 typedef struct TaskControlBlockStruct{
 	// Next Node
 	LINKEDLIST stLink;
@@ -97,11 +98,14 @@ typedef struct TaskControlBlockStruct{
 	// Child thread address/ID
 	LINKEDLIST stThreadLink;
 
-	// Child thread list
-	LIST stChildThreadList;
-
 	// Parent process ID
 	QWORD qwParentProcessID;
+
+
+	QWORD vqwFPUContext[512 / 8];
+
+	// Child thread list
+	LIST stChildThreadList;
 
 	// Context
 	CONTEXT stContext;
@@ -109,6 +113,12 @@ typedef struct TaskControlBlockStruct{
 	// Address/Size of stack
 	void* pvStackAddress;
 	QWORD qwStackSize;
+
+	// Is FPU used
+	BOOL bFPUUsed;
+
+	// Padding
+	char vcPadding[11];
 } TCB;
 
 // Task pool status manager structure
@@ -144,6 +154,9 @@ typedef struct SchedulerStruct{
 
 	// Processor time in Idle Task
 	QWORD qwSpendProcessorTimeInIdleTask;
+
+	// Last task ID use FPU
+	QWORD qwLastFPUUsedTaskID;
 
 } SCHEDULER;
 
@@ -192,6 +205,12 @@ static TCB* GetProcessByThread(TCB* pstThread);
 //=================================
 void IdleTask(void);
 void HaltProcessorByLoad(void);
+
+//=================================
+// FPU
+//=================================
+QWORD GetLastFPUUsedTaskID(void);
+void SetLastFPUUsedTaskID(QWORD qwTaskID);
 
 #endif /*__TASK_H__*/
 

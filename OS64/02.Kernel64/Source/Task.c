@@ -125,6 +125,9 @@ TCB* CreateTask(QWORD qwFlags, void* pvMemoryAddress, QWORD qwMemorySize, QWORD 
 	// Initialize child thread list
 	InitializeList(&(pstTask->stChildThreadList));
 
+	// Set FPU used flag
+	pstTask->bFPUUsed = FALSE;
+
 	// Start Critical Section
 	bPreviousFlag = LockForSystemData();
 
@@ -201,6 +204,9 @@ void InitializeScheduler(void){
 	// Initialize processor utilization structure
 	gs_stScheduler.qwSpendProcessorTimeInIdleTask = 0;
 	gs_stScheduler.qwProcessorLoad = 0;
+
+	// Initialize FPU use task ID(invalid)
+	gs_stScheduler.qwLastFPUUsedTaskID = TASK_INVALIDID;
 
 }
 
@@ -366,6 +372,15 @@ void Schedule(void){
 		gs_stScheduler.qwSpendProcessorTimeInIdleTask += TASK_PROCESSORTIME - gs_stScheduler.iProcessorTime;
 	}
 
+	// If next task is not used FPU
+	if(gs_stScheduler.qwLastFPUUsedTaskID != pstNextTask->stLink.qwID){
+		// Set TS bit
+		SetTS();
+	}
+	else{
+		ClearTS();
+	}
+
 	// Update processor usage time
 	gs_stScheduler.iProcessorTime = TASK_PROCESSORTIME;
 
@@ -427,6 +442,15 @@ BOOL ScheduleInInterrupt(void){
 	}
 	// End Critical Section
 	UnlockForSystemData(bPreviousFlag);
+
+	if(gs_stScheduler.qwLastFPUUsedTaskID != pstNextTask->stLink.qwID){
+		// Set TS bit
+		SetTS();
+	}
+	else{
+		ClearTS();
+	}
+
 
 	// Copy context to IST
 	MemCpy(pcContextAddress, &(pstNextTask->stContext), sizeof(CONTEXT));
@@ -699,6 +723,16 @@ void HaltProcessorByLoad(void){
 }
 
 
+//==============================================================
+//							FPU
+//==============================================================
+QWORD GetLastFPUUsedTaskID(void){
+	return gs_stScheduler.qwLastFPUUsedTaskID;
+}
+
+void SetLastFPUUsedTaskID(QWORD qwTaskID){
+	gs_stScheduler.qwLastFPUUsedTaskID = qwTaskID;
+}
 
 
 
