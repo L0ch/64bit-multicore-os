@@ -4,7 +4,7 @@ SECTION .text
 
 ; Import
 extern CommonExceptionHandler, CommonInterruptHandler, KeyboardHandler
-extern TimerHandler
+extern TimerHandler, DeviceNotAvailableHandelr
 
 ; Export
 ; ISR for Processing Exception
@@ -162,7 +162,7 @@ ISRDeviceNotAvailable:
 	SAVECONTEXT
 
 	mov rdi, 7
-	call CommonExceptionHandler
+	call DeviceNotAvailableHandler
 
 	LOADCONTEXT
 	iretq
