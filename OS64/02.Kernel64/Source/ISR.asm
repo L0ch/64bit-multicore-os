@@ -4,7 +4,7 @@ SECTION .text
 
 ; Import
 extern CommonExceptionHandler, CommonInterruptHandler, KeyboardHandler
-extern TimerHandler, DeviceNotAvailableHandelr
+extern TimerHandler, DeviceNotAvailableHandler
 
 ; Export
 ; ISR for Processing Exception

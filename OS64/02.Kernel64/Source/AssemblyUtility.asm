@@ -6,7 +6,7 @@ global InPortByte, OutPortByte, LoadGDTR, LoadTR, LoadIDTR
 global EnableInterrupt, DisableInterrupt, ReadRFLAGS
 global ReadTSC
 global SwitchContext, Hlt, TestAndSet
-global InitailizeFPU, SaveFPUContext, LoadFPUContext, SetTS, ClearTS
+global InitializeFPU, SaveFPUContext, LoadFPUContext, SetTS, ClearTS
 
 ; Read 1byte from port
 InPortByte:
