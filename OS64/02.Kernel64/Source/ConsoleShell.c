@@ -27,6 +27,7 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"cpuload", "Show Processor Load", CPULoad},
 		{"testmutex", "Test Mutex Function", TestMutex},
 		{"testthread", "Test Thread And Process Function", TestThread},
+		{"testpie", "Test PIE Calculation", TestPIE},
 };
 
 
@@ -653,6 +654,74 @@ static void TestThread(const char* pcParameterBuffer){
 	else{
 		Printf("Process Create Fail\n");
 	}
+}
+
+static volatile QWORD gs_qwRandomValue = 0;
+
+QWORD Random(void){
+	gs_qwRandomValue = (gs_qwRandomValue * 412153 + 5571031) >> 16;
+	return gs_qwRandomValue;
+}
+
+static void FPUTestTask(void){
+	double dValue1;
+	double dValue2;
+
+	TCB* pstRunningTask;
+	QWORD qwCount = 0;
+	QWORD qwRandomValue;
+	int i;
+	int iOffset;
+	char vcData[4] = {'-', '\\', '|', '/'};
+	CHARACTER* pstScreen = (CHARACTER*) CONSOLE_VIDEOMEMORYADDRESS;
+
+	pstRunningTask = GetRunningTask();
+
+	// Get Task ID to use offset
+	iOffset = (pstRunningTask->stLink.qwID & 0xFFFFFFFF) * 2;
+	iOffset = CONSOLE_WIDTH * CONSOLE_HEIGHT - (iOffset % (CONSOLE_WIDTH * CONSOLE_HEIGHT));
+
+	while(1){
+		dValue1 = 1;
+		dValue2 = 1;
+
+		for(i=0; i<10; i++){
+			qwRandomValue = Random();
+			dValue1 *= (double) qwRandomValue;
+			dValue2 *= (double) qwRandomValue;
+
+			Sleep(1);
+			qwRandomValue = Random();
+			dValue1 /= (double) qwRandomValue;
+			dValue2 /= (double) qwRandomValue;
+
+		}
+		if(dValue1 != dValue2){
+			Printf("Value Is Not Same [%f] != [%f]\n", dValue1, dValue2);
+			break;
+		}
+		qwCount++;
+
+		pstScreen[iOffset].bCharactor = vcData[qwCount % 4];
+		pstScreen[iOffset].bAttribute = (iOffset % 15) + 1;
+
+	}
+
+}
+
+static void TestPIE(const char* pcParameterBuffer){
+	double dResult;
+	int i;
+
+	Printf("PIE Calculation Test\n");
+	Printf("Result: 355 / 113 = ");
+	dResult = (double) 355 / 113;
+	Printf("%d.%d%d\n", (QWORD) dResult, ((QWORD) (dResult * 10) % 10), ((QWORD)(dResult * 100) % 10));
+
+	for(i=0; i<100; i++){
+		CreateTask(TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, (QWORD) FPUTestTask);
+	}
+
 }
 
 static void Echo(const char* pcParameterBuffer){

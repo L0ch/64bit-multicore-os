@@ -268,12 +268,13 @@ int SPrintf(char * pcBuffer, const char* pcFormatString, ...){
 }
 
 int VSPrintf(char* pcBuffer, const char* pcFormatString, va_list ap){
-	QWORD i, j;
+	QWORD i, j, k;
 	int BufferIndex = 0;
 	int FormatLength, CopyLength;
 	char* pcCopyString;
 	QWORD qwValue;
 	int iValue;
+	double dValue;
 
 	FormatLength = StrLen(pcFormatString);
 	for(i = 0; i < FormatLength; i++){
@@ -324,6 +325,25 @@ int VSPrintf(char* pcBuffer, const char* pcFormatString, va_list ap){
 				qwValue = (QWORD)(va_arg(ap, QWORD));
 				BufferIndex += IToA(qwValue, pcBuffer + BufferIndex, 16);
 				break;
+
+			case 'f':
+				dValue = (double)(va_arg(ap, double));
+				dValue += 0.005;
+				pcBuffer[BufferIndex] = '0' + (QWORD)(dValue * 100) % 10;
+				pcBuffer[BufferIndex + 1] = '0' + (QWORD)(dValue * 10) % 10;
+				pcBuffer[BufferIndex + 2] = '.';
+				for(k=0; ; k++){
+					if(((QWORD)dValue == 0) && (k !=0)){
+						break;
+					}
+					pcBuffer[BufferIndex + 3 + k] = '0' + ((QWORD) dValue % 10);
+					dValue = dValue / 10;
+				}
+				pcBuffer[BufferIndex + 3 + k] ='\0';
+				ReverseString(pcBuffer + BufferIndex);
+				BufferIndex += 3 + k;
+				break;
+
 			default:
 				pcBuffer[BufferIndex] = pcFormatString[i];
 				BufferIndex++;

@@ -53,5 +53,6 @@ static void CPULoad(const char* pcParameterBuffer);
 static void TestMutex(const char* pcParameterBuffer);
 static void CreateThreadTask(void);
 static void TestThread(const char* pcParameterBuffer);
+static void TestPIE(const char* pcParameterBuffer);
 
 #endif /*__CONSOLESHELL_H__*/
