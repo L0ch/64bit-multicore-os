@@ -50,7 +50,7 @@ static QWORD CalcDynamicMemorySize(void);
 static int CalcMetaBlockCount(QWORD qwDynamicRAMSize);
 static int AllocationBuddyBlock(QWORD qwAlignedSize);
 static QWORD GetBuddyBlockSize(QWORD qwSize);
-static int GetBlockListIndexOfMatchSize(WORD qwAlignedSize);
+static int GetBlockListIndexOfMatchSize(QWORD qwAlignedSize);
 static int FindFreeBlockInBitmap(int iBlockListIndex);
 static void SetFlagInBitmap(int iBlockListIndex, int iOffset, BYTE bFlag);
 static BOOL FreeBuddyBlock(int iBlockListIndex, int iBlockOffset);
