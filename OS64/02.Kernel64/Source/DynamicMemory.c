@@ -356,7 +356,7 @@ static BOOL FreeBuddyBlock(int iBlockListIndex, int iBlockOffset){
 
 
 // Return flag in bitmap of block
-static BYTE GetFlagInBitmap(int iBlockListIndex, int iOffset, BYTE bFlag){
+static BYTE GetFlagInBitmap(int iBlockListIndex, int iOffset){
 	BYTE* pbBitmap;
 
 	pbBitmap = gs_stDynamicMemory.pstBitmapOfLevel[iBlockListIndex].pbBitmap;
@@ -374,7 +374,7 @@ void GetDynamicMemoryInfo(QWORD* pqwDynamicMemoryStartAddress, QWORD* pqwDynamic
 	*pqwUsedMemorySize = gs_stDynamicMemory.qwUsedSize;
 }
 
-DYNAMICMEMORY* GetDynamicMemoryManger(void){
+DYNAMICMEMORY* GetDynamicMemoryManager(void){
 	return &gs_stDynamicMemory;
 }
 

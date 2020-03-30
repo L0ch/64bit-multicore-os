@@ -475,7 +475,7 @@ BOOL ConvertScanCodeAndPutQueue(BYTE bScanCode){
 
 	// Convert scan code to ASCII code
 	if(ConvertScanCodeToASCIICode(bScanCode, &(stData.bASCIICode), &(stData.bFlags)) == TRUE){
-		// Start Critical ZSection
+		// Start Critical Section
 		bPreviousInterrupt = LockForSystemData();
 
 		// Insert key data
