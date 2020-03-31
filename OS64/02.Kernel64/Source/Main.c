@@ -8,6 +8,7 @@
 #include "Utility.h"
 #include "Task.h"
 #include "PIT.h"
+#include "DynamicMemory.h"
 
 void Main(void){
 
@@ -46,6 +47,12 @@ void Main(void){
 	Printf("TCB Pool And Scheduler Initialize............[Done]\n");
 	CursorY++;
 	InitializeScheduler();
+
+	// Initialize Dynamic memory
+	Printf("Dynamic Memory Initialize....................[Done]\n");
+	CursorY++;
+	InitializeDynamicMemory();
+
 	// Interrupt every 1ms
 	InitializePIT(MSTOCOUNT(1),1);
 

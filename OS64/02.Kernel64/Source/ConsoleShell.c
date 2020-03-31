@@ -7,6 +7,7 @@
 #include "AssemblyUtility.h"
 #include "Task.h"
 #include "Synchronization.h"
+#include "DynamicMemory.h"
 
 SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"help", "Show Help", Help},
@@ -28,6 +29,9 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"testmutex", "Test Mutex Function", TestMutex},
 		{"testthread", "Test Thread And Process Function", TestThread},
 		{"testpie", "Test PIE Calculation", TestPIE},
+		{"dynamicmeminfo", "Show Dynamic Memory Information", ShowDynamicMemoryInfo},
+		{"testalloc", "Test Sequential Allocation & Free", TestSequentialAllocation},
+		{"testrandalloc", "Test Random Allocation & Free", TestRandomAllocation},
 };
 
 
@@ -163,7 +167,7 @@ static void Help(const char* pcCommandBuffer){
 	Printf("=======================================\n");
 	Count = sizeof(gs_vstCommandTable) / sizeof(SHELLCOMMANDENTRY);
 
-	// calc longest command length for print sort
+	// Calculate longest command length for print sort
 	for(i = 0; i < Count; i++){
 		Length = StrLen(gs_vstCommandTable[i].pcCommand);
 		if(Length > MaxCommandLength){
@@ -177,6 +181,15 @@ static void Help(const char* pcCommandBuffer){
 		GetCursor(&CursorX, &CursorY);
 		SetCursor(MaxCommandLength, CursorY);
 		Printf("  - %s\n", gs_vstCommandTable[i].pcHelp);
+
+		if((i != 0) && ((i % 20) == 0)){
+			Printf("Press any key to continue...(press 'q' to exit)");
+			if(GetCh() == 'q'){
+				Printf("\n");
+				break;
+			}
+			Printf("\n");
+		}
 	}
 }
 
@@ -751,10 +764,119 @@ static void Echo(const char* pcParameterBuffer){
 }
 
 
+static void ShowDynamicMemoryInfo(const char* pcParameterBuffer){
+	QWORD qwStartAddress, qwTotalSize, qwMetaSize, qwUsedSize;
+
+	GetDynamicMemoryInfo(&qwStartAddress, &qwTotalSize, &qwMetaSize, &qwUsedSize);
+
+	Printf("========== Dynamic Memory Information ==========\n");
+	Printf("Start Address: [0x%Q]\n", qwStartAddress);
+	Printf("Total Size:    [0x%Q]byte, [%d]MB\n", qwTotalSize, qwTotalSize / 1024 / 1024);
+	Printf("Meta Size:     [0x%Q]byte, [%d]KB\n", qwMetaSize, qwMetaSize / 1024);
+	Printf("Used Size:     [0x%Q]byte, [%d]KB\n", qwUsedSize, qwUsedSize / 1024);
+}
+
+static void TestSequentialAllocation(const char* pcParameterBuffer){
+	DYNAMICMEMORY* pstMemory;
+	long i, j, k;
+	QWORD* pqwBuffer;
+
+	Printf("========== Dynamic Memory Test ==========\n");
+	pstMemory = GetDynamicMemoryManager();
+
+	for(i=0; i<pstMemory->iMaxLevelCount; i++){
+		Printf("Block List [%d] Test Start...\n", i);
+		Printf("Allocation and Verification: ");
+
+		// Allocate all blocks in each block list
+		for(j=0; j<(pstMemory->iBlockCountOfSmallestBlock >> i); j++){
+			pqwBuffer = AllocateMemory(DYNAMICMEMORY_MIN_SIZE << i);
+			if(pqwBuffer == NULL){
+				Printf("\nFailed to Allocate\n");
+				return ;
+			}
+
+			for(k=0; k<(DYNAMICMEMORY_MIN_SIZE << i) / 8; k++){
+				pqwBuffer[k] = k;
+			}
+			for(k=0; k<(DYNAMICMEMORY_MIN_SIZE << i)/8; k++){
+				if(pqwBuffer[k] != k){
+					Printf("\nFailed to Verify\n");
+					return ;
+				}
+			}
+			Printf(".");
+		}
+
+		Printf("\nFree: ");
+		// Free all blocks
+		for(j=0; j<(pstMemory->iBlockCountOfSmallestBlock >> i); j++){
+			if(FreeMemory((void*)(pstMemory->qwStartAddress + (DYNAMICMEMORY_MIN_SIZE << i) * j)) == FALSE){
+				Printf("\nFailed to Free\n");
+				return ;
+			}
+			Printf(".");
+		}
+		Printf("\n");
+	}
+	Printf("Test Complete.\n");
+}
 
 
+static void RandomAllocationTask(void){
+	TCB* pstTask;
+	QWORD qwMemorySize;
+	char vcBuffer[200];
+	BYTE* pbAllocationBuffer;
+	int i, j;
+	int iY;
+
+	pstTask = GetRunningTask();
+	iY = (pstTask->stLink.qwID) % 15 + 9;
+
+	for(j=0; j<10; j++){
+		do{
+			// 1KB ~ 32MB rand
+			qwMemorySize = ((Random() % (32 * 1024)) + 1) * 1024;
+			pbAllocationBuffer = AllocateMemory(qwMemorySize);
+
+			if(pbAllocationBuffer == 0){
+				Sleep(1);
+			}
+		} while(pbAllocationBuffer == 0);
+
+		SPrintf(vcBuffer, "|Address: [0x%Q] Size: [0x%Q] Allocation Success", pbAllocationBuffer, qwMemorySize);
+		PrintStringXY(20, iY, vcBuffer);
+		Sleep(200);
+
+		SPrintf(vcBuffer, "|Address: [0x%Q] Size: [0x%Q] Data Write...     ", pbAllocationBuffer, qwMemorySize);
+		PrintStringXY(20, iY, vcBuffer);
+		for(i=0; i<qwMemorySize / 2; i++){
+			pbAllocationBuffer[i] = Random() & 0xFF;
+			pbAllocationBuffer[i + (qwMemorySize / 2)] = pbAllocationBuffer[i];
+		}
+		Sleep(200);
+		SPrintf(vcBuffer, "|Address: [0x%Q] Size: [0x%Q] Data Verify...     ", pbAllocationBuffer, qwMemorySize);
+		PrintStringXY(20, iY, vcBuffer);
+		for(i=0; i<qwMemorySize / 2; i++){
+			if(pbAllocationBuffer[i] != pbAllocationBuffer[i + (qwMemorySize / 2)]){
+				Printf("Task ID[0x%Q] Verify Failed\n", pstTask->stLink.qwID);
+				ExitTask();
+			}
+		}
+		FreeMemory(pbAllocationBuffer);
+		Sleep(200);
+	}
+	ExitTask();
+}
 
 
+static void TestRandomAllocation(const char* pcParameterBuffer){
+	int i;
+	for(i=0; i<1000; i++){
+		CreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD, 0, 0, (QWORD) RandomAllocationTask );
+	}
+}
 
 
 
