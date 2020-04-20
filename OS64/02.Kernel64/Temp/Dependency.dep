@@ -32,6 +32,10 @@ Console.o: ../Source/Console.c ../Source/Console.h ../Source/Types.h \
  ../Source/List.h ../Source/Utility.h
 Utility.o: ../Source/Utility.c ../Source/Utility.h ../Source/Types.h \
  ../Source/AssemblyUtility.h ../Source/Task.h ../Source/List.h
+HDD.o: ../Source/HDD.c ../Source/HDD.h ../Source/Types.h \
+ ../Source/Synchronization.h ../Source/Utility.h \
+ ../Source/AssemblyUtility.h ../Source/Task.h ../Source/List.h \
+ ../Source/Console.h
 PIC.o: ../Source/PIC.c ../Source/PIC.h ../Source/Types.h \
  ../Source/AssemblyUtility.h ../Source/Task.h ../Source/List.h
 Keyboard.o: ../Source/Keyboard.c ../Source/Types.h \
