@@ -5,7 +5,9 @@
 #include "Task.h"
 
 BYTE InPortByte(WORD wPort);
-void OutPortByte(WORD wPort, BYTE bData );
+void OutPortByte(WORD wPort, BYTE bData);
+WORD InPortWord(WORD wPort);
+void OutPortWord(WORD wPort, WORD wData);
 void LoadGDTR(QWORD qwGDTRAddress);
 void LoadTR(WORD wTSSSegmentOffset);
 void LoadIDTR(QWORD qwIDTRAddress);

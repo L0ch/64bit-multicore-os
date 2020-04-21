@@ -2,7 +2,8 @@
 
 SECTION .text
 
-global InPortByte, OutPortByte, LoadGDTR, LoadTR, LoadIDTR
+global InPortByte, OutPortByte, InPortWord, OutPortWord
+global LoadGDTR, LoadTR, LoadIDTR
 global EnableInterrupt, DisableInterrupt, ReadRFLAGS
 global ReadTSC
 global SwitchContext, Hlt, TestAndSet
@@ -254,6 +255,33 @@ SetTS:
 
 ClearTS:
 	clts	; Set TS bit(7) 0
+	ret
+
+
+; Read 2byte(WORD) from port
+; PARAM : Port Number
+InPortWord:
+	push rdx
+
+	mov rdx, rdi
+	mov rax, 0
+	in ax, dx
+
+	pop rdx
+	ret
+
+; Write 2byte(WORD)
+; PARAM : Port Number, Data
+OutPortWord:
+	push rdx
+	push rax
+
+	mov rdx, rdi	; Param 1
+	mov rax, rsi 	; Param 2
+	out dx, ax
+
+	pop rax
+	pop rdx
 	ret
 
 
