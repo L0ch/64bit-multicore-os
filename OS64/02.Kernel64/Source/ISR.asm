@@ -4,7 +4,7 @@ SECTION .text
 
 ; Import
 extern CommonExceptionHandler, CommonInterruptHandler, KeyboardHandler
-extern TimerHandler, DeviceNotAvailableHandler
+extern TimerHandler, DeviceNotAvailableHandler, HDDHandler
 
 ; Export
 ; ISR for Processing Exception
@@ -461,7 +461,7 @@ ISRHDD1:
 	SAVECONTEXT
 
 	mov rdi, 46
-	call CommonInterruptHandler
+	call HDDHandler
 
 	LOADCONTEXT
 	iretq
@@ -471,7 +471,7 @@ ISRHDD2:
 	SAVECONTEXT
 
 	mov rdi, 47
-	call CommonInterruptHandler
+	call HDDHandler
 
 	LOADCONTEXT
 	iretq

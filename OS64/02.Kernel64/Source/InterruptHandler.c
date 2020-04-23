@@ -6,6 +6,7 @@
 #include "Task.h"
 #include "Descriptor.h"
 #include "AssemblyUtility.h"
+#include "HDD.h"
 
 void CommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode){
 	char vcBuffer[3] = {0, };
@@ -135,7 +136,29 @@ void DeviceNotAvailableHandler(int iVectorNumber){
 }
 
 
+void HDDHandler(int iVectorNumber){
+	char vcBuffer[] = "[INT:  , ]";
+	static int g_iHDDInterruptCount = 0;
+	BYTE bTemp;
 
+	vcBuffer[5] = '0' + iVectorNumber / 10;
+	vcBuffer[6] = '0' + iVectorNumber % 10;
+
+	vcBuffer[8] = '0' + g_iHDDInterruptCount;
+	g_iHDDInterruptCount = (g_iHDDInterruptCount + 1) % 10;
+	PrintStringXY(10, 0, vcBuffer);
+
+	// IRQ 14
+	if(iVectorNumber - PIC_IRQSTARTVECTOR == 14){
+		SetHDDInterruptFlag(TRUE, TRUE);
+	}
+	// IRQ 15
+	else{
+		SetHDDInterruptFlag(FALSE, TRUE);
+	}
+	// EOI
+	SendEOIToPIC(iVectorNumber - PIC_IRQSTARTVECTOR);
+}
 
 
 
