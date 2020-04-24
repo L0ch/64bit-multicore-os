@@ -99,6 +99,7 @@ void SetHDDInterruptFlag(BOOL bPrimary, BOOL bFlag){
 		gs_stHDDManager.bSecondaryInterruptOccur = bFlag;
 	}
 }
+
 // Wait until interrupt occurred
 static BOOL WaitForHDDInterrupt(BOOL bPrimary){
 	QWORD qwTickCount;
@@ -213,6 +214,7 @@ int ReadHDDSector(BOOL bPrimary, BOOL bMaster, DWORD dwLBA, int iSectorCount, ch
 	// Check
 	if((gs_stHDDManager.bHDDDetected == FALSE) || (iSectorCount <= 0) || (iSectorCount > 256) ||
 			((dwLBA + iSectorCount) >=gs_stHDDManager.stHDDInformation.dwTotalSectors)){
+
 		return 0;
 	}
 
@@ -225,14 +227,16 @@ int ReadHDDSector(BOOL bPrimary, BOOL bMaster, DWORD dwLBA, int iSectorCount, ch
 		wPortBase = HDD_PORT_SECONDARYBASE;
 	}
 
+	// Synchronization
+	Lock(&(gs_stHDDManager.stMutex));
 
 	// Wait for previous command
 	if(WaitForHDDNoBusy(bPrimary) == FALSE){
+		Unlock(&(gs_stHDDManager.stMutex));
 		return FALSE;
 	}
 
-	// Synchronization
-	Lock(&(gs_stHDDManager.stMutex));
+
 
 	// ================ Set data register ==================
 	// LBA address : sector num -> cylinder num -> head num
