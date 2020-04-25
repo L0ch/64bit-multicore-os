@@ -45,6 +45,8 @@ void StartConsoleShell(void){
 	BYTE bKey;
 	int CursorX, CursorY;
 	PrintPrompt(CONSOLESHELL_PROMPTMESSAGE);
+	int iMatchedIndex;
+	char* pcMatchedCmd;
 
 	while(1){
 		bKey = GetCh();
@@ -70,17 +72,33 @@ void StartConsoleShell(void){
 			MemSet(vcCommandBuffer, '\0', CONSOLESHELL_MAXCOMMANDBUFFERCOUNT);
 			CommandBufferIndex = 0;
 		}
+		// TAB->command auto complete
+		else if(bKey == KEY_TAB){
+			if(CommandBufferIndex > 0){
+				iMatchedIndex = AutoComplete(vcCommandBuffer);
+				pcMatchedCmd = gs_vstCommandTable[iMatchedIndex].pcCommand;
+
+				if(iMatchedIndex == -1){
+					Printf("\n");
+					PrintPrompt(CONSOLESHELL_PROMPTMESSAGE);
+					Printf("%s",vcCommandBuffer);
+				}
+				else if(iMatchedIndex == -2){
+					// Nothing
+				}
+				else{
+					MemCpy(vcCommandBuffer, pcMatchedCmd, StrLen(pcMatchedCmd));
+					CommandBufferIndex = StrLen(vcCommandBuffer);
+				}
+			}
+
+		}
 		else if((bKey == KEY_LSHIFT) || (bKey == KEY_RSHIFT) || (bKey == KEY_CAPSLOCK) ||
 				(bKey == KEY_NUMLOCK) || (bKey == KEY_SCROLLLOCK)){
 			;
 		}
 		// normal character
 		else{
-			// TAB->space
-			if(bKey == KEY_TAB){
-				bKey = ' ';
-			}
-
 			if(CommandBufferIndex < CONSOLESHELL_MAXCOMMANDBUFFERCOUNT){
 				vcCommandBuffer[CommandBufferIndex] = bKey;
 				Printf("%c", bKey);
@@ -160,6 +178,79 @@ int GetNextParameter(PARAMETERLIST* pstList, char* pcParameter){
 /////////////////////////////////////////////////////////
 // Processing Command
 ////////////////////////////////////////////////////////
+
+static void Echo(const char* pcParameterBuffer){
+	char vcParameter[100];
+	PARAMETERLIST stList;
+	BOOL bAppendNewLine = TRUE;
+	int iLength;
+	InitializeParameter(&stList, pcParameterBuffer);
+
+
+
+	// Do not append newline
+	iLength = GetNextParameter(&stList, vcParameter);
+	if(MemCmp(vcParameter, "-n", 2) == 0){
+		bAppendNewLine = FALSE;
+		Printf("%s",pcParameterBuffer+iLength);
+	}
+	else{
+		Printf("%s",pcParameterBuffer);
+	}
+
+	if(bAppendNewLine){
+		Printf("\n");
+	}
+
+
+}
+
+// return : BufferIndex
+static int AutoComplete(const char* pcCommandBuffer){
+	int i;
+	int iCount;
+	int iLength;
+	int iCommandLength;
+	int iMatchedCount = 0;
+	int iMatchedCommandIndex[50];
+	char pcTemp[CONSOLESHELL_MAXCOMMANDBUFFERCOUNT];
+
+	iCount = sizeof(gs_vstCommandTable) / sizeof(SHELLCOMMANDENTRY);
+	iLength = StrLen(pcCommandBuffer);
+
+
+	for(i = 0; i < iCount; i++){
+		if(iLength < StrLen(gs_vstCommandTable[i].pcCommand)){
+			if(MemCmp(pcCommandBuffer, gs_vstCommandTable[i].pcCommand, iLength) == 0){
+				iMatchedCommandIndex[iMatchedCount] = i;
+				iMatchedCount++;
+			}
+		}
+	}
+	if(iMatchedCount == 0){
+		return -2;
+		//return 0;
+	}
+	// Match only one
+	if(iMatchedCount == 1){
+		iCommandLength = StrLen(gs_vstCommandTable[iMatchedCommandIndex[0]].pcCommand);
+		MemCpy(pcTemp, gs_vstCommandTable[iMatchedCommandIndex[0]].pcCommand + iLength, iCommandLength - iLength);
+		pcTemp[iCommandLength - iLength] = '\0';
+		Printf("%s",pcTemp);
+
+		return iMatchedCommandIndex[0];
+
+	}
+	// Match over than 1
+	else{
+		Printf("\n");
+		for(i=0; i<iMatchedCount; i++){
+			Printf("%s   ", gs_vstCommandTable[iMatchedCommandIndex[i]].pcCommand);
+		}
+		return -1;
+	}
+
+}
 
 static void Help(const char* pcCommandBuffer){
 	int i;
@@ -741,31 +832,6 @@ static void TestPIE(const char* pcParameterBuffer){
 
 }
 
-static void Echo(const char* pcParameterBuffer){
-	char vcParameter[100];
-	PARAMETERLIST stList;
-	BOOL bAppendNewLine = TRUE;
-	int iLength;
-	InitializeParameter(&stList, pcParameterBuffer);
-
-
-
-	// Do not append newline
-	iLength = GetNextParameter(&stList, vcParameter);
-	if(MemCmp(vcParameter, "-n", 2) == 0){
-		bAppendNewLine = FALSE;
-		Printf("%s",pcParameterBuffer+iLength);
-	}
-	else{
-		Printf("%s",pcParameterBuffer);
-	}
-
-	if(bAppendNewLine){
-		Printf("\n");
-	}
-
-
-}
 
 
 static void ShowDynamicMemoryInfo(const char* pcParameterBuffer){

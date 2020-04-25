@@ -32,6 +32,10 @@ int GetNextParameter(PARAMETERLIST* pstList, char* pcParameter);
 
 
 // Shell command function
+static void Echo(const char* pcParameterBuffer);
+static int AutoComplete(const char* pcCommandBuffer);
+
+
 static void Help(const char* pcParameterBuffer);
 static void Clear(const char* pcParameterBuffer);
 static void ShowTotalMemorySize(const char* pcParameterBuffer);
@@ -45,7 +49,6 @@ static void ShowDateAndTime(const char* pcParameterBuffer);
 static void TestTask1(void);
 static void TestTask2(void);
 static void CreateTestTask(const char* pcParameterBuffer);
-static void Echo(const char* pcParameterBuffer);
 static void ChangeTaskPriority(const char* pcParameterBuffer);
 static void ShowTaskList(const char* pcParameterBuffer);
 static void KillTask(const char* pcParameterBuffer);
@@ -61,5 +64,6 @@ static void RandomAllocationTask(void);
 static void ShowHDDInformation(const char* pcParameterBuffer);
 static void ReadSector(const char* pcParameterBuffer);
 static void WriteSector(const char* pcParameterBuffer);
+
 
 #endif /*__CONSOLESHELL_H__*/
