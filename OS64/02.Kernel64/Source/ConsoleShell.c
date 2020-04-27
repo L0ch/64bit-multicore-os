@@ -36,17 +36,23 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] = {
 		{"hddinfo", "Show HDD Information", ShowHDDInformation},
 		{"readsector", "Read HDD Sector, ex)readsector [LBA] [COUNT]", ReadSector},
 		{"writesector", "Write HDD Sector, ex)writesector [LBA] [COOUNT]", WriteSector},
+		{"history", "Show Command History", ShowCommandHistory},
 };
 
+
+LIST gs_HistoryListManager;
 
 void StartConsoleShell(void){
 	char vcCommandBuffer[CONSOLESHELL_MAXCOMMANDBUFFERCOUNT];
 	int CommandBufferIndex = 0;
 	BYTE bKey;
 	int CursorX, CursorY;
-	PrintPrompt(CONSOLESHELL_PROMPTMESSAGE);
 	int iMatchedIndex;
 	char* pcMatchedCmd;
+
+	PrintPrompt(CONSOLESHELL_PROMPTMESSAGE);
+	// List for command history
+	InitializeList(&gs_HistoryListManager);
 
 	while(1){
 		bKey = GetCh();
@@ -65,6 +71,11 @@ void StartConsoleShell(void){
 
 			if(CommandBufferIndex > 0){
 					vcCommandBuffer[CommandBufferIndex] = '\0';
+					// Add to history list
+					COMMANDHISTORY *node = AllocateMemory(sizeof(COMMANDHISTORY));
+					MemCpy(node->pcCommand, vcCommandBuffer, StrLen(vcCommandBuffer));
+					AddListToTail(&gs_HistoryListManager, node);
+					// Execute
 					ExecuteCommand(vcCommandBuffer);
 			}
 
@@ -205,7 +216,7 @@ static void Echo(const char* pcParameterBuffer){
 
 }
 
-// return : BufferIndex
+
 static int AutoComplete(const char* pcCommandBuffer){
 	int i;
 	int iCount;
@@ -251,6 +262,18 @@ static int AutoComplete(const char* pcCommandBuffer){
 	}
 
 }
+
+static void ShowCommandHistory(const char* pcParameterBuffer){
+	COMMANDHISTORY* p;
+	int iCount = 0;
+
+	for(p=gs_HistoryListManager.pvHead; p->stLink.pvNext != NULL ; p=p->stLink.pvNext){
+		Printf(" %d  %s\n",iCount, p->pcCommand);
+		iCount ++;
+	}
+	Printf(" %d  %s\n",iCount, p->pcCommand);
+}
+
 
 static void Help(const char* pcCommandBuffer){
 	int i;
@@ -1069,7 +1092,6 @@ static void WriteSector(const char* pcParameterBuffer){
 	Printf("LBA [%d], [%d] Sector Write Success.\n", dwLBA, iSectorCount);
 	FreeMemory(pcBuffer);
 }
-
 
 
 

@@ -2,8 +2,9 @@
 #define __CONSOLESHELL_H__
 
 #include "Types.h"
+#include "List.h"
 
-#define CONSOLESHELL_MAXCOMMANDBUFFERCOUNT	300
+#define CONSOLESHELL_MAXCOMMANDBUFFERCOUNT	100
 #define CONSOLESHELL_PROMPTMESSAGE			"OSLAKE$ "
 
 // Define Function pointer type
@@ -22,6 +23,12 @@ typedef struct ParameterListStruct{
 	int Length;
 	int CurrentPosition;
 }PARAMETERLIST;
+
+typedef struct CommandHistory{
+	LINKEDLIST stLink;
+
+	char pcCommand[CONSOLESHELL_MAXCOMMANDBUFFERCOUNT];
+} COMMANDHISTORY;
 
 #pragma pack(pop)
 
@@ -64,6 +71,7 @@ static void RandomAllocationTask(void);
 static void ShowHDDInformation(const char* pcParameterBuffer);
 static void ReadSector(const char* pcParameterBuffer);
 static void WriteSector(const char* pcParameterBuffer);
+static void ShowCommandHistory(const char* pcParameterBuffer);
 
 
 #endif /*__CONSOLESHELL_H__*/
