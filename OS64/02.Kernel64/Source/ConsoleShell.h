@@ -41,7 +41,7 @@ int GetNextParameter(PARAMETERLIST* pstList, char* pcParameter);
 // Shell command function
 static void Echo(const char* pcParameterBuffer);
 static int AutoComplete(const char* pcCommandBuffer);
-
+static void* PrintPreviousCommand(const char* pcCommandBuffer, void* pstCurrent, BYTE bKey, int BufferIndex);
 
 static void Help(const char* pcParameterBuffer);
 static void Clear(const char* pcParameterBuffer);

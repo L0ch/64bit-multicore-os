@@ -49,6 +49,8 @@ void StartConsoleShell(void){
 	int CursorX, CursorY;
 	int iMatchedIndex;
 	char* pcMatchedCmd;
+	COMMANDHISTORY* pstCurrent = NULL;
+	int i,iLen;
 
 	PrintPrompt(CONSOLESHELL_PROMPTMESSAGE);
 	// List for command history
@@ -72,9 +74,10 @@ void StartConsoleShell(void){
 			if(CommandBufferIndex > 0){
 					vcCommandBuffer[CommandBufferIndex] = '\0';
 					// Add to history list
-					COMMANDHISTORY *node = AllocateMemory(sizeof(COMMANDHISTORY));
+					COMMANDHISTORY* node = AllocateMemory(sizeof(COMMANDHISTORY));
 					MemCpy(node->pcCommand, vcCommandBuffer, StrLen(vcCommandBuffer));
 					AddListToTail(&gs_HistoryListManager, node);
+					pstCurrent = NULL;
 					// Execute
 					ExecuteCommand(vcCommandBuffer);
 			}
@@ -101,6 +104,21 @@ void StartConsoleShell(void){
 					MemCpy(vcCommandBuffer, pcMatchedCmd, StrLen(pcMatchedCmd));
 					CommandBufferIndex = StrLen(vcCommandBuffer);
 				}
+			}
+
+		}
+		// Print previous commands
+		else if(bKey == KEY_UP || bKey == KEY_DOWN){
+			pstCurrent = PrintPreviousCommand(vcCommandBuffer, pstCurrent, bKey, CommandBufferIndex);
+			if(pstCurrent != NULL){
+				Printf("%s",pstCurrent->pcCommand);
+				iLen = StrLen(pstCurrent->pcCommand);
+				MemCpy(vcCommandBuffer, pstCurrent->pcCommand, iLen);
+				CommandBufferIndex = iLen;
+			}
+			else{
+				MemSet(vcCommandBuffer, '\0', CONSOLESHELL_MAXCOMMANDBUFFERCOUNT);
+				CommandBufferIndex = 0;
 			}
 
 		}
@@ -183,40 +201,6 @@ int GetNextParameter(PARAMETERLIST* pstList, char* pcParameter){
 	return Length;
 }
 
-
-
-
-/////////////////////////////////////////////////////////
-// Processing Command
-////////////////////////////////////////////////////////
-
-static void Echo(const char* pcParameterBuffer){
-	char vcParameter[100];
-	PARAMETERLIST stList;
-	BOOL bAppendNewLine = TRUE;
-	int iLength;
-	InitializeParameter(&stList, pcParameterBuffer);
-
-
-
-	// Do not append newline
-	iLength = GetNextParameter(&stList, vcParameter);
-	if(MemCmp(vcParameter, "-n", 2) == 0){
-		bAppendNewLine = FALSE;
-		Printf("%s",pcParameterBuffer+iLength);
-	}
-	else{
-		Printf("%s",pcParameterBuffer);
-	}
-
-	if(bAppendNewLine){
-		Printf("\n");
-	}
-
-
-}
-
-
 static int AutoComplete(const char* pcCommandBuffer){
 	int i;
 	int iCount;
@@ -263,15 +247,85 @@ static int AutoComplete(const char* pcCommandBuffer){
 
 }
 
+static void* PrintPreviousCommand(const char* vcCommandBuffer, void* pstCurrent, BYTE bKey, int BufferIndex){
+	int CursorX, CursorY;
+	int i=0;
+	COMMANDHISTORY* pstLink = pstCurrent;
+
+	if(bKey == KEY_UP){
+		if(gs_HistoryListManager.pvHead != pstCurrent){
+			if(pstLink == NULL){
+				pstLink = GetTailFromList(&gs_HistoryListManager);
+			}
+			else{
+				pstLink = GetPreviousFromList(&gs_HistoryListManager, pstLink);
+			}
+		}
+	}
+	else{
+		if(pstLink == NULL){
+			return NULL;
+		}
+		else{
+			pstLink = GetNextFromList(&gs_HistoryListManager, pstLink);
+		}
+	}
+
+
+
+	GetCursor(&CursorX, &CursorY);
+	for(i=1; i<=BufferIndex; i++){
+		PrintStringXY(CursorX - i, CursorY, " ");
+	}
+	SetCursor(CursorX - BufferIndex, CursorY);
+
+	return pstLink;
+
+}
+
+/////////////////////////////////////////////////////////
+// Processing Command
+////////////////////////////////////////////////////////
+
+static void Echo(const char* pcParameterBuffer){
+	char vcParameter[100];
+	PARAMETERLIST stList;
+	BOOL bAppendNewLine = TRUE;
+	int iLength;
+	InitializeParameter(&stList, pcParameterBuffer);
+
+
+
+	// Do not append newline
+	iLength = GetNextParameter(&stList, vcParameter);
+	if(MemCmp(vcParameter, "-n", 2) == 0){
+		bAppendNewLine = FALSE;
+		Printf("%s",pcParameterBuffer+iLength);
+	}
+	else{
+		Printf("%s",pcParameterBuffer);
+	}
+
+	if(bAppendNewLine){
+		Printf("\n");
+	}
+
+
+}
+
+
+
+
 static void ShowCommandHistory(const char* pcParameterBuffer){
 	COMMANDHISTORY* p;
 	int iCount = 0;
 
 	for(p=gs_HistoryListManager.pvHead; p->stLink.pvNext != NULL ; p=p->stLink.pvNext){
 		Printf(" %d  %s\n",iCount, p->pcCommand);
-		iCount ++;
+		iCount++;
 	}
 	Printf(" %d  %s\n",iCount, p->pcCommand);
+
 }
 
 
