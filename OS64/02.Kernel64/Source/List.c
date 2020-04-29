@@ -16,7 +16,7 @@ int GetListCount(const LIST* pstList){
 // Add node to tail of list
 void AddListToTail(LIST* pstList, void* pvNode){
 	LINKEDLIST* pstLink;
-
+	LINKEDLIST* pstPrev;
 	// Next node address : NULL
 	pstLink = (LINKEDLIST*) pvNode;
 	pstLink->pvNext = NULL;
@@ -27,14 +27,20 @@ void AddListToTail(LIST* pstList, void* pvNode){
 		pstList->pvHead = pvNode;
 		pstList->pvTail = pvNode;
 		pstList->iNodeCount = 1;
+
+		pstLink->pvPrev = NULL;
 		return ;
 	}
 
+
 	// List is not empty
 	// Find tail node
-	pstLink = (LINKEDLIST*) pstList->pvTail;
-	// Set next
-	pstLink->pvNext = pvNode;
+	pstPrev = (LINKEDLIST*) pstList->pvTail;
+	// Set next to previous node
+	pstPrev->pvNext = pvNode;
+
+	// Set prev to current node
+	pstLink->pvPrev = pstPrev;
 
 	// Set Tail to added node
 	pstList->pvTail = pvNode;
@@ -47,10 +53,14 @@ void AddListToTail(LIST* pstList, void* pvNode){
 // Add node to Head of list
 void AddListToHead(LIST* pstList, void* pvNode){
 	LINKEDLIST* pstLink;
+	LINKEDLIST* pstNext;
 
 	// Set Next to Head
 	pstLink = (LINKEDLIST*) pvNode;
-	pstLink->pvNext = pstList->pvHead;
+	pstNext = pstList->pvHead;
+
+	pstLink->pvNext = pstNext;
+	pstLink->pvPrev = NULL;
 
 	// If list is empty
 	// Set Head/Tail
@@ -58,8 +68,12 @@ void AddListToHead(LIST* pstList, void* pvNode){
 		pstList->pvHead = pvNode;
 		pstList->pvTail = pvNode;
 		pstList->iNodeCount = 1;
+
+
 		return ;
 	}
+
+	pstNext->pvPrev = pvNode;
 
 	// Set tail to added node
 	pstList->pvHead = pvNode;
@@ -71,6 +85,7 @@ void AddListToHead(LIST* pstList, void* pvNode){
 void* RemoveList(LIST* pstList, QWORD qwID){
 	LINKEDLIST* pstLink;
 	LINKEDLIST* pstPreviousLink;
+	LINKEDLIST* pstNextLink;
 
 	pstPreviousLink = (LINKEDLIST*) pstList->pvHead;
 	for(pstLink = pstPreviousLink; pstLink != NULL; pstLink = pstLink->pvNext){
@@ -84,13 +99,18 @@ void* RemoveList(LIST* pstList, QWORD qwID){
 			// If first node, set Head to next node
 			else if(pstLink == pstList->pvHead){
 				pstList->pvHead = pstLink->pvNext;
+				pstNextLink = GetNextFromList(pstList, pstLink);
+				pstNextLink->pvPrev = NULL;
 			}
 			// If last node, set tail to previous node
 			else if(pstLink == pstList->pvTail){
 				pstList->pvTail = pstPreviousLink;
+				pstPreviousLink->pvNext = NULL;
 			}
 			else{
 				pstPreviousLink->pvNext = pstLink->pvNext;
+				pstNextLink = GetNextFromList(pstList, pstLink);
+				pstNextLink->pvPrev = pstLink->pvPrev;
 			}
 			pstList->iNodeCount--;
 			return pstLink;
@@ -154,4 +174,10 @@ void* GetNextFromList(const LIST* pstList, void* pstCurrent){
 	LINKEDLIST* pstLink;
 	pstLink = (LINKEDLIST*) pstCurrent;
 	return pstLink->pvNext;
+}
+
+void* GetPreviousFromList(const LIST* pstList, void* pstCurrent){
+	LINKEDLIST* pstLink;
+	pstLink = (LINKEDLIST*) pstCurrent;
+	return pstLink->pvPrev;
 }

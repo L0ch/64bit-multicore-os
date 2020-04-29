@@ -10,6 +10,7 @@
 typedef struct LinkedListStruct{
 	// Next address
 	void * pvNext;
+	void * pvPrev;
 	// Identification
 	QWORD qwID;
 
@@ -38,6 +39,7 @@ void* FindList(const LIST* pstList, QWORD qwID);
 void* GetHeadFromList(const LIST* pstList);
 void* GetTailFromList(const LIST* pstList);
 void* GetNextFromList(const LIST* pstList, void* pstCurrent);
+void* GetPreviousFromList(const LIST* pstList, void* pstCurrent);
 
 #endif /*__LIST_H__*/
 
